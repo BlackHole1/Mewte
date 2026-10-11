@@ -21,6 +21,7 @@ Mewte 會定時檢查你的 GitHub 帳號通知，把符合規則的標示為完
 
 - 支援多個 GitHub 帳號，各自設定輪詢間隔。
 - 在瀏覽器中設定規則，條件可巢狀，涵蓋儲存庫、原因、類型、狀態、標題、標籤、作者等。
+- 規則同時也是一個 YAML 檔案，你或 AI 助理不必開啟瀏覽器就能修改。
 - 支援 Issue、Pull request 與 Discussion。
 - 信任一條規則之前，可以先預覽它會清除哪些通知。
 - 清除過的通知都有歷史記錄，並附上原始連結。
@@ -58,6 +59,16 @@ Mewte 需要 **classic** 個人存取權杖 ([按此建立](https://github.com/s
 - 條件所需的資料如果 GitHub 沒有提供，該條件永遠不會符合，以免誤清除。
 - GitHub 無法還原已標示為完成的通知，歷史記錄中保留了每則通知的連結。
 
+### 規則檔案
+
+規則會同步到資料目錄下的 `rules.yaml`。檔案有變更時 Mewte 會自動載入，在瀏覽器中儲存規則時則會重寫該檔案。請先修改一份副本，驗證通過後再取代原檔案：
+
+```bash
+docker compose exec mewte mewte validate-rules /data/rules.new.yaml
+```
+
+檔案格式的說明位於你的執行個體的 `/llms.txt`，寫法方便直接交給 AI 助理來修改。
+
 ## 設定
 
 所有設定都是環境變數。使用 Docker Compose 時，請寫入與 `compose.yaml` 同目錄的 `.env` 檔案。完整清單請見 [.env.example](../../../.env.example)。
@@ -69,6 +80,7 @@ Mewte 需要 **classic** 個人存取權杖 ([按此建立](https://github.com/s
 | `SETUP_TOKEN` | 無 | 設定後，初始設定頁面會先要求輸入此值，才會建立擁有者帳號。 |
 | `TRUST_PROXY` | `false` | 位於反向代理之後時請設為 `true`。 |
 | `GITHUB_API_URL` | `https://api.github.com` | GitHub Enterprise Server 請使用 `https://<host>/api/v3`。 |
+| `RULES_FILE` | 使用 SQLite 時為資料磁碟區中的 `rules.yaml`，否則無 | 規則檔案的路徑。設為 `off` 可停用。 |
 | `MEWTE_PORT` | `3000` | Docker Compose 使用的主機連接埠。 |
 
 遺失 `SECRET_KEY` 後，已儲存的權杖將無法讀取。

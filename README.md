@@ -21,6 +21,7 @@ Mewte checks the notifications of your GitHub accounts on a schedule, marks the 
 
 - Several GitHub accounts, each with its own polling interval.
 - Rules built in the browser, with nested conditions on repository, reason, type, state, title, labels, author and more.
+- The rules are also a YAML file, so you or an AI assistant can change them without the browser.
 - Issues, pull requests and discussions.
 - Preview what a rule would clear before you trust it.
 - A history of everything cleared, with a link to each thread.
@@ -58,6 +59,16 @@ Tokens are stored encrypted and never shown again. With SAML single sign-on, als
 - A condition that needs data GitHub does not provide never matches, so nothing is cleared by mistake.
 - GitHub cannot restore a notification that was marked as done. The history keeps a link to each one.
 
+### Rules file
+
+The rules are mirrored in `rules.yaml` in the data directory. Mewte loads the file when it changes and rewrites it when you save a rule in the browser. Edit a copy and check it before you replace the file:
+
+```bash
+docker compose exec mewte mewte validate-rules /data/rules.new.yaml
+```
+
+The format is described at `/llms.txt` on your instance, written so that an AI assistant can make the edit.
+
 ## Configuration
 
 Settings are environment variables. With Docker Compose, put them in a `.env` file next to `compose.yaml`. [.env.example](.env.example) lists all of them.
@@ -69,6 +80,7 @@ Settings are environment variables. With Docker Compose, put them in a `.env` fi
 | `SETUP_TOKEN` | none | If set, the setup page asks for it before creating the owner account. |
 | `TRUST_PROXY` | `false` | Set to `true` behind a reverse proxy. |
 | `GITHUB_API_URL` | `https://api.github.com` | For GitHub Enterprise Server, use `https://<host>/api/v3`. |
+| `RULES_FILE` | `rules.yaml` in the data volume with SQLite, none otherwise | Path of the rules file. `off` disables it. |
 | `MEWTE_PORT` | `3000` | Host port used by Docker Compose. |
 
 Losing `SECRET_KEY` makes the stored tokens unreadable.

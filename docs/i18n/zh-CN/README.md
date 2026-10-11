@@ -21,6 +21,7 @@ Mewte 定时检查你的 GitHub 账号通知，把符合规则的标记为已完
 
 - 支持多个 GitHub 账号，各自设置轮询间隔。
 - 在浏览器中配置规则，条件可嵌套，涵盖仓库、原因、类型、状态、标题、标签、作者等。
+- 规则同时也是一个 YAML 文件，你或 AI 助手不打开浏览器就能修改。
 - 支持 Issue、Pull request 和 Discussion。
 - 信任一条规则之前，可以先预览它会清理哪些通知。
 - 清理过的通知都有历史记录，并附原始链接。
@@ -58,6 +59,16 @@ Mewte 需要 **classic** 个人访问令牌 ([点此创建](https://github.com/s
 - 条件所需的数据如果 GitHub 没有提供，该条件永不匹配，以免误清理。
 - GitHub 无法恢复已标记为完成的通知，历史记录中保留了每条通知的链接。
 
+### 规则文件
+
+规则会同步到数据目录下的 `rules.yaml`。文件有改动时 Mewte 会自动加载，在浏览器中保存规则时则会重写该文件。请先修改一份副本，校验通过后再替换原文件：
+
+```bash
+docker compose exec mewte mewte validate-rules /data/rules.new.yaml
+```
+
+文件格式的说明位于你的实例的 `/llms.txt`，写法便于直接交给 AI 助手来修改。
+
 ## 配置
 
 所有设置都是环境变量。使用 Docker Compose 时，请写入 `compose.yaml` 同目录的 `.env` 文件。完整列表见 [.env.example](../../../.env.example)。
@@ -69,6 +80,7 @@ Mewte 需要 **classic** 个人访问令牌 ([点此创建](https://github.com/s
 | `SETUP_TOKEN` | 无 | 设置后，初始化页面会先要求输入该值，才会创建所有者账号。 |
 | `TRUST_PROXY` | `false` | 部署在反向代理之后时设为 `true`。 |
 | `GITHUB_API_URL` | `https://api.github.com` | GitHub Enterprise Server 请使用 `https://<host>/api/v3`。 |
+| `RULES_FILE` | 使用 SQLite 时为数据卷中的 `rules.yaml`，否则无 | 规则文件的路径。设为 `off` 可关闭。 |
 | `MEWTE_PORT` | `3000` | Docker Compose 使用的宿主机端口。 |
 
 丢失 `SECRET_KEY` 后，已保存的令牌将无法读取。
