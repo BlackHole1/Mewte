@@ -13,6 +13,11 @@ Mantén en calma tu bandeja de entrada de GitHub: una herramienta autoalojada qu
 [![Image](https://img.shields.io/badge/ghcr.io-blackhole1%2Fmewte-2496ED?logo=docker&logoColor=white)](https://github.com/BlackHole1/Mewte/pkgs/container/mewte)
 [![License](https://img.shields.io/github/license/BlackHole1/Mewte)](../../../LICENSE)
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../../../docs/screenshots/es/dashboard-dark.png">
+  <img src="../../../docs/screenshots/es/dashboard.png" alt="El panel de Mewte" width="820">
+</picture>
+
 </div>
 
 Mewte revisa periódicamente las notificaciones de tus cuentas de GitHub, marca como hechas las que coinciden con tus reglas y conserva un historial. La ejecutas tú, así que tus tokens nunca salen de tu servidor.
@@ -28,6 +33,27 @@ Mewte revisa periódicamente las notificaciones de tus cuentas de GitHub, marca 
 - Inicio de sesión para un solo usuario, con autenticación de dos factores opcional.
 - SQLite, PostgreSQL o MySQL.
 - 8 idiomas de interfaz, temas claro y oscuro.
+
+## Capturas de pantalla
+
+<table>
+  <tr>
+    <td rowspan="2" width="50%" valign="top">
+      <img src="../../../docs/screenshots/es/rule-editor.png" alt="Condiciones anidadas, con una vista previa de lo que la regla limpiaría"><br>
+      <sub>Condiciones anidadas, con una vista previa de lo que la regla limpiaría</sub>
+    </td>
+    <td width="50%" valign="top">
+      <img src="../../../docs/screenshots/es/rules.png" alt="Las reglas, comprobadas de arriba abajo"><br>
+      <sub>Las reglas, comprobadas de arriba abajo</sub>
+    </td>
+  </tr>
+  <tr>
+    <td valign="top">
+      <img src="../../../docs/screenshots/es/history.png" alt="Todo lo que una regla ha limpiado"><br>
+      <sub>Todo lo que una regla ha limpiado</sub>
+    </td>
+  </tr>
+</table>
 
 ## Inicio rápido
 

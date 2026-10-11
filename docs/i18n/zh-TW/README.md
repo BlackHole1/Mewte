@@ -13,6 +13,11 @@
 [![Image](https://img.shields.io/badge/ghcr.io-blackhole1%2Fmewte-2496ED?logo=docker&logoColor=white)](https://github.com/BlackHole1/Mewte/pkgs/container/mewte)
 [![License](https://img.shields.io/github/license/BlackHole1/Mewte)](../../../LICENSE)
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../../../docs/screenshots/zh-TW/dashboard-dark.png">
+  <img src="../../../docs/screenshots/zh-TW/dashboard.png" alt="Mewte 儀表板" width="820">
+</picture>
+
 </div>
 
 Mewte 會定時檢查你的 GitHub 帳號通知，把符合規則的標示為完成，並保留歷史記錄。它由你自己執行，權杖不會離開你的伺服器。
@@ -28,6 +33,27 @@ Mewte 會定時檢查你的 GitHub 帳號通知，把符合規則的標示為完
 - 單一使用者登入，可啟用雙重驗證。
 - 支援 SQLite、PostgreSQL 與 MySQL。
 - 8 種介面語言，淺色與深色主題。
+
+## 螢幕截圖
+
+<table>
+  <tr>
+    <td rowspan="2" width="50%" valign="top">
+      <img src="../../../docs/screenshots/zh-TW/rule-editor.png" alt="巢狀條件，並可預覽規則會清除哪些通知"><br>
+      <sub>巢狀條件，並可預覽規則會清除哪些通知</sub>
+    </td>
+    <td width="50%" valign="top">
+      <img src="../../../docs/screenshots/zh-TW/rules.png" alt="規則由上而下依序比對"><br>
+      <sub>規則由上而下依序比對</sub>
+    </td>
+  </tr>
+  <tr>
+    <td valign="top">
+      <img src="../../../docs/screenshots/zh-TW/history.png" alt="規則清除過的每一則通知"><br>
+      <sub>規則清除過的每一則通知</sub>
+    </td>
+  </tr>
+</table>
 
 ## 快速開始
 

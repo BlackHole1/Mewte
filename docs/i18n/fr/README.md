@@ -13,6 +13,11 @@ Gardez votre boîte de réception GitHub au calme : un outil auto-hébergé qui 
 [![Image](https://img.shields.io/badge/ghcr.io-blackhole1%2Fmewte-2496ED?logo=docker&logoColor=white)](https://github.com/BlackHole1/Mewte/pkgs/container/mewte)
 [![License](https://img.shields.io/github/license/BlackHole1/Mewte)](../../../LICENSE)
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../../../docs/screenshots/fr/dashboard-dark.png">
+  <img src="../../../docs/screenshots/fr/dashboard.png" alt="Le tableau de bord de Mewte" width="820">
+</picture>
+
 </div>
 
 Mewte vérifie régulièrement les notifications de vos comptes GitHub, marque comme terminées celles qui correspondent à vos règles et en conserve l'historique. Vous l'exécutez vous-même : vos jetons ne quittent jamais votre serveur.
@@ -28,6 +33,27 @@ Mewte vérifie régulièrement les notifications de vos comptes GitHub, marque c
 - Une connexion pour un seul utilisateur, avec authentification à deux facteurs en option.
 - SQLite, PostgreSQL ou MySQL.
 - 8 langues d'interface, thèmes clair et sombre.
+
+## Captures d'écran
+
+<table>
+  <tr>
+    <td rowspan="2" width="50%" valign="top">
+      <img src="../../../docs/screenshots/fr/rule-editor.png" alt="Conditions imbriquées, avec un aperçu de ce que la règle traiterait"><br>
+      <sub>Conditions imbriquées, avec un aperçu de ce que la règle traiterait</sub>
+    </td>
+    <td width="50%" valign="top">
+      <img src="../../../docs/screenshots/fr/rules.png" alt="Les règles, vérifiées de haut en bas"><br>
+      <sub>Les règles, vérifiées de haut en bas</sub>
+    </td>
+  </tr>
+  <tr>
+    <td valign="top">
+      <img src="../../../docs/screenshots/fr/history.png" alt="Tout ce qu'une règle a traité"><br>
+      <sub>Tout ce qu'une règle a traité</sub>
+    </td>
+  </tr>
+</table>
 
 ## Démarrage rapide
 

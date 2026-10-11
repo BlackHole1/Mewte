@@ -13,6 +13,11 @@
 [![Image](https://img.shields.io/badge/ghcr.io-blackhole1%2Fmewte-2496ED?logo=docker&logoColor=white)](https://github.com/BlackHole1/Mewte/pkgs/container/mewte)
 [![License](https://img.shields.io/github/license/BlackHole1/Mewte)](../../../LICENSE)
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../../../docs/screenshots/zh-CN/dashboard-dark.png">
+  <img src="../../../docs/screenshots/zh-CN/dashboard.png" alt="Mewte 仪表盘" width="820">
+</picture>
+
 </div>
 
 Mewte 定时检查你的 GitHub 账号通知，把符合规则的标记为已完成，并保留历史记录。它由你自己运行，令牌不会离开你的服务器。
@@ -28,6 +33,27 @@ Mewte 定时检查你的 GitHub 账号通知，把符合规则的标记为已完
 - 单用户登录，可开启双因素认证。
 - 支持 SQLite、PostgreSQL 和 MySQL。
 - 8 种界面语言，浅色和深色主题。
+
+## 截图
+
+<table>
+  <tr>
+    <td rowspan="2" width="50%" valign="top">
+      <img src="../../../docs/screenshots/zh-CN/rule-editor.png" alt="嵌套条件，并可预览规则会清理哪些通知"><br>
+      <sub>嵌套条件，并可预览规则会清理哪些通知</sub>
+    </td>
+    <td width="50%" valign="top">
+      <img src="../../../docs/screenshots/zh-CN/rules.png" alt="规则按从上到下的顺序匹配"><br>
+      <sub>规则按从上到下的顺序匹配</sub>
+    </td>
+  </tr>
+  <tr>
+    <td valign="top">
+      <img src="../../../docs/screenshots/zh-CN/history.png" alt="规则清理过的每一条通知"><br>
+      <sub>规则清理过的每一条通知</sub>
+    </td>
+  </tr>
+</table>
 
 ## 快速开始
 
