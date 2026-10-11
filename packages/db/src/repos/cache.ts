@@ -27,3 +27,8 @@ export async function setCached(
 export async function deleteExpiredCache(conn: Conn, now: number): Promise<void> {
   await conn.db.deleteFrom("subjectCache").where("expiresAt", "<=", now).execute();
 }
+
+/** Drops every cached lookup, for when what a token can see may have changed. */
+export async function clearCache(conn: Conn): Promise<void> {
+  await conn.db.deleteFrom("subjectCache").execute();
+}

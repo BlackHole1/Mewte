@@ -102,6 +102,7 @@ export const api = {
     request<Account>("PATCH", `/accounts/${id}`, input),
   deleteAccount: (id: string) => request<{ ok: true }>("DELETE", `/accounts/${id}`),
   runAccount: (id: string) => request<RunLog>("POST", `/accounts/${id}/run`),
+  runBacklog: (id: string) => request<RunLog>("POST", `/accounts/${id}/backlog`),
 
   rules: () => request<Rule[]>("GET", "/rules"),
   rulesSource: () => request<RulesSource>("GET", "/rules/source"),

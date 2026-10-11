@@ -1,15 +1,18 @@
 import {
+  deleteAccount,
   getAccount,
   insertRule,
   listAccounts,
+  listClearedThreads,
   queryHistory,
   queryRunLogs,
+  recordClearedThread,
   releaseLease,
 } from "@mewte/db";
 import type { Condition, ConditionLeaf, RuleInput } from "@mewte/shared";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { type Harness, VALID_TOKEN, createHarness } from "../testing/harness";
-import { bindAccount } from "./accounts";
+import { bindAccount, editAccount } from "./accounts";
 import { dryRun, rulesForAccount, runAccount, scopeIncludes } from "./runner";
 import { createScheduler } from "./scheduler";
 
@@ -46,7 +49,7 @@ async function addRule(condition: RuleInput["condition"], patch: Partial<RuleInp
   );
 }
 
-async function run(trigger: "manual" | "schedule" = "manual") {
+async function run(trigger: "manual" | "schedule" | "backlog" = "manual") {
   const outcome = await runAccount(h.deps, accountId, trigger);
   if (outcome.kind !== "done") throw new Error(`run was ${outcome.kind}`);
   return outcome.run;
@@ -152,13 +155,92 @@ describe("runAccount", () => {
     expect(history.items.map((i) => i.ruleName)).toEqual([winner.name]);
   });
 
-  it("does not call GitHub when no rule applies to the account", async () => {
+  it("reports what is waiting even when no rule applies to the account", async () => {
     h.github.addNotification({ id: "1" });
     await addRule(all(leaf({ field: "repo", operator: "matches", value: ["*"] })), {
       enabled: false,
     });
-    expect(await run()).toMatchObject({ status: "success", fetched: 0, processed: 0 });
-    expect(h.github.calls).toHaveLength(0);
+    expect(await run()).toMatchObject({ status: "success", fetched: 1, matched: 0, processed: 0 });
+    expect(h.github.done).toEqual([]);
+    // Nothing to decide, so nothing beyond the list is requested.
+    expect(h.github.calls.map((call) => call.path)).toEqual(["/notifications"]);
+  });
+
+  it("clears a read notification that arrived after the account was connected", async () => {
+    h.github.addNotification({
+      id: "1",
+      repo: "acme/widgets",
+      unread: false,
+      updatedAt: "2026-10-05T12:30:00Z",
+    });
+    await addRule(all(leaf({ field: "repo", operator: "matches", value: ["acme/*"] })));
+
+    expect(await run()).toMatchObject({ fetched: 1, matched: 1, processed: 1 });
+    expect(h.github.done).toEqual(["1"]);
+  });
+
+  it("leaves the read notifications from before the baseline alone until asked", async () => {
+    // Read before Mewte was connected: it may be in the inbox or long since marked as done.
+    h.github.addNotification({
+      id: "1",
+      repo: "acme/widgets",
+      unread: false,
+      updatedAt: "2026-10-05T11:59:59Z",
+    });
+    await addRule(all(leaf({ field: "repo", operator: "matches", value: ["acme/*"] })));
+
+    expect(await run()).toMatchObject({ fetched: 0, processed: 0 });
+    h.clock.advance(300_000);
+    h.github.lastModified = "Mon, 05 Oct 2026 12:05:00 GMT";
+    expect(await run("schedule")).toMatchObject({ fetched: 0, processed: 0 });
+    expect(h.github.done).toEqual([]);
+
+    expect(await run("backlog")).toMatchObject({ trigger: "backlog", fetched: 1, processed: 1 });
+    expect(h.github.done).toEqual(["1"]);
+    // Going through the backlog again finds nothing left to do.
+    expect(await run("backlog")).toMatchObject({ fetched: 0, processed: 0 });
+    expect(h.github.done).toEqual(["1"]);
+  });
+
+  it("clears one version of a thread once, although GitHub keeps listing it", async () => {
+    const notification = h.github.addNotification({
+      id: "1",
+      repo: "acme/widgets",
+      updatedAt: "2026-10-05T12:30:00Z",
+    });
+    await addRule(all(leaf({ field: "repo", operator: "matches", value: ["acme/*"] })));
+
+    expect(await run()).toMatchObject({ fetched: 1, processed: 1 });
+    // Done on GitHub, yet still in the list as a read notification.
+    expect(notification.unread).toBe(false);
+    expect(await run()).toMatchObject({ fetched: 0, processed: 0 });
+    expect(h.github.done).toEqual(["1"]);
+    expect((await queryHistory(h.deps.conn, { page: 1, pageSize: 10 })).total).toBe(1);
+
+    // New activity brings the thread back to the inbox. The user reads it before the next poll.
+    notification.updated_at = "2026-10-05T13:00:00Z";
+    expect(await run()).toMatchObject({ fetched: 1, processed: 1 });
+    expect(h.github.done).toEqual(["1", "1"]);
+
+    // Marked as unread by hand: the user wants it back, so this version is left alone.
+    notification.unread = true;
+    expect(await run()).toMatchObject({ fetched: 0, processed: 0 });
+    expect((await queryHistory(h.deps.conn, { page: 1, pageSize: 10 })).total).toBe(2);
+  });
+
+  it("looks up details again after the token is replaced", async () => {
+    h.github.addNotification({ id: "9", repo: "private/repo", private: true });
+    await addRule(all(leaf({ field: "state", operator: "in", value: ["merged"] })));
+    expect(await run()).toMatchObject({ fetched: 1, matched: 0 });
+
+    // The new token can read the repository; the cached "not visible" answer must not survive.
+    h.github.resource("private/repo/pulls/9", {
+      user: { login: "a" },
+      state: "closed",
+      merged: true,
+    });
+    await editAccount(h.deps, accountId, { token: VALID_TOKEN });
+    expect(await run()).toMatchObject({ fetched: 1, matched: 1, processed: 1 });
   });
 
   it("fetches subject details only when a rule cannot be decided without them", async () => {
@@ -605,6 +687,20 @@ describe("scheduler", () => {
     await createScheduler(h.deps).tick();
     expect(await countHistory(h.deps.conn)).toBe(1);
   });
+
+  it("forgets cleared threads once GitHub can no longer list them, and with their account", async () => {
+    const day = 86_400_000;
+    const record = (threadId: string, clearedAt: number) =>
+      recordClearedThread(h.deps.conn, { accountId, threadId, updatedAt: clearedAt, clearedAt });
+    await record("old", h.clock.now - 91 * day);
+    await record("recent", h.clock.now - 89 * day);
+
+    await createScheduler(h.deps).tick();
+    expect([...(await listClearedThreads(h.deps.conn, accountId)).keys()]).toEqual(["recent"]);
+
+    await deleteAccount(h.deps.conn, accountId);
+    expect((await listClearedThreads(h.deps.conn, accountId)).size).toBe(0);
+  });
 });
 
 describe("dryRun", () => {
@@ -630,13 +726,49 @@ describe("dryRun", () => {
             reason: "subscribed",
             url: "https://github.test/acme/widgets/pull/1",
             updatedAt: "2026-10-05T10:00:00Z",
+            private: false,
           },
         ],
+        undecided: [],
+        repoScope: true,
       },
     ]);
     expect(h.github.done).toEqual([]);
     expect((await queryHistory(h.deps.conn, { page: 1, pageSize: 10 })).total).toBe(0);
     expect((await queryRunLogs(h.deps.conn, { page: 1, pageSize: 10 })).total).toBe(0);
+  });
+
+  it("looks at the notifications a run would, and names the ones it cannot decide", async () => {
+    h.github.addNotification({ id: "1", repo: "acme/widgets", subjectPath: "pulls/1" });
+    h.github.resource("acme/widgets/pulls/1", {
+      user: { login: "a" },
+      state: "closed",
+      merged: true,
+    });
+    // Details of a private repository are not visible to this token.
+    h.github.addNotification({ id: "2", repo: "private/repo", private: true });
+    // Read before the account was connected: a run leaves it alone, so the preview does too.
+    h.github.addNotification({ id: "3", repo: "acme/widgets", unread: false });
+    // Read since: a run looks at it.
+    h.github.addNotification({
+      id: "4",
+      repo: "acme/widgets",
+      subjectPath: "pulls/1",
+      unread: false,
+      updatedAt: "2026-10-05T12:30:00Z",
+    });
+
+    const [account] = (
+      await dryRun(h.deps, {
+        accountScope: { type: "all" },
+        condition: all(leaf({ field: "state", operator: "in", value: ["merged"] })),
+      })
+    ).accounts;
+    expect(account).toMatchObject({ fetched: 3, error: null, repoScope: true });
+    expect(account?.matches.map((n) => n.threadId)).toEqual(["1", "4"]);
+    expect(account?.undecided).toMatchObject([
+      { threadId: "2", repo: "private/repo", private: true },
+    ]);
   });
 
   it("limits itself to the accounts in scope and reports failures per account", async () => {
@@ -657,6 +789,7 @@ describe("dryRun", () => {
       condition,
     });
     expect(scoped.accounts.map((a) => a.login)).toEqual(["hubot"]);
+    expect(scoped.accounts[0]?.repoScope).toBe(false);
 
     h.github.users.delete(VALID_TOKEN);
     const everyone = await dryRun(h.deps, { accountScope: { type: "all" }, condition });

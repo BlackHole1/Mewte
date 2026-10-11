@@ -2,6 +2,7 @@ import {
   type AccountScope,
   type ConditionGroup,
   type DryRunResult,
+  type NotificationPreview,
   type Rule,
   type RuleInput,
   conditionSchema,
@@ -120,9 +121,45 @@ function ScopeField({
   );
 }
 
-function PreviewResults({ result }: { result: DryRunResult }) {
+function PreviewList({
+  items,
+  hint,
+}: {
+  items: NotificationPreview[];
+  hint?: (item: NotificationPreview) => string;
+}) {
   const { t } = useTranslation();
   const label = useEnumLabel();
+  return (
+    <ul className="flex flex-col divide-y rounded-lg border">
+      {items.map((item) => (
+        <li className="flex items-center gap-3 px-3 py-2 text-sm" key={item.threadId}>
+          <div className="flex min-w-0 flex-1 flex-col">
+            <span className="line-clamp-2 break-words" title={item.title}>
+              {item.title}
+            </span>
+            <span className="truncate text-muted-foreground text-xs">
+              {item.repo} / {label("subjectTypes", item.subjectType)} /{" "}
+              {label("reasons", item.reason)}
+            </span>
+            {hint ? <span className="text-warning-foreground text-xs">{hint(item)}</span> : null}
+          </div>
+          <Button
+            aria-label={t("common.openOnGithub")}
+            render={<a href={item.url} rel="noreferrer" target="_blank" />}
+            size="icon-sm"
+            variant="ghost"
+          >
+            <ExternalLinkIcon aria-hidden="true" />
+          </Button>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function PreviewResults({ result }: { result: DryRunResult }) {
+  const { t } = useTranslation();
   return (
     <div className="flex flex-col gap-4">
       {result.accounts.length === 0 ? (
@@ -147,33 +184,27 @@ function PreviewResults({ result }: { result: DryRunResult }) {
           {account.matches.length === 0 && !account.error ? (
             <p className="text-muted-foreground text-sm">{t("rules.previewNoMatch")}</p>
           ) : null}
-          {account.matches.length > 0 ? (
-            <ul className="flex flex-col divide-y rounded-lg border">
-              {account.matches.map((match) => (
-                <li className="flex items-center gap-3 px-3 py-2 text-sm" key={match.threadId}>
-                  <div className="flex min-w-0 flex-1 flex-col">
-                    <span className="line-clamp-2 break-words" title={match.title}>
-                      {match.title}
-                    </span>
-                    <span className="truncate text-muted-foreground text-xs">
-                      {match.repo} / {label("subjectTypes", match.subjectType)} /{" "}
-                      {label("reasons", match.reason)}
-                    </span>
-                  </div>
-                  <Button
-                    aria-label={t("common.openOnGithub")}
-                    render={<a href={match.url} rel="noreferrer" target="_blank" />}
-                    size="icon-sm"
-                    variant="ghost"
-                  >
-                    <ExternalLinkIcon aria-hidden="true" />
-                  </Button>
-                </li>
-              ))}
-            </ul>
+          {account.matches.length > 0 ? <PreviewList items={account.matches} /> : null}
+          {account.undecided.length > 0 ? (
+            <>
+              <span className="text-muted-foreground text-sm">
+                {t("rules.previewUndecided", { count: account.undecided.length })}
+              </span>
+              <PreviewList
+                hint={(item) =>
+                  item.private && !account.repoScope
+                    ? t("rules.previewUndecidedPrivate")
+                    : t("rules.previewUndecidedOther")
+                }
+                items={account.undecided}
+              />
+            </>
           ) : null}
         </div>
       ))}
+      {result.accounts.length > 0 ? (
+        <p className="text-muted-foreground text-xs">{t("rules.previewBacklogHint")}</p>
+      ) : null}
     </div>
   );
 }

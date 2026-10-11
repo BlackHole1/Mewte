@@ -1,5 +1,6 @@
 import {
   type AccountRecord,
+  clearCache,
   getAccount,
   getAccountByGithubId,
   insertAccount,
@@ -80,6 +81,7 @@ export async function bindAccount(
     status: "ok",
     lastError: null,
     lastModified: null,
+    baselineAt: now,
     pollIntervalSec: null,
     nextRunAt: now,
     lastRunAt: null,
@@ -133,5 +135,7 @@ export async function editAccount(
   }
 
   await updateAccount(deps.conn, id, patch);
+  // A new token may see what the old one could not, so lookups cached as unavailable must go.
+  if (input.token !== undefined) await clearCache(deps.conn);
   return (await getAccount(deps.conn, id)) ?? existing;
 }

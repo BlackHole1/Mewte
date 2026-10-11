@@ -39,6 +39,7 @@ export async function updateAccount(conn: Conn, id: string, patch: AccountPatch)
 }
 
 export async function deleteAccount(conn: Conn, id: string): Promise<void> {
+  await conn.db.deleteFrom("clearedThreads").where("accountId", "=", id).execute();
   await conn.db.deleteFrom("githubAccounts").where("id", "=", id).execute();
 }
 
@@ -95,7 +96,7 @@ export async function releaseLease(conn: Conn, id: string, owner: string): Promi
 }
 
 /**
- * Forgets the Last-Modified marker so the next poll re-reads every unread notification.
+ * Forgets the Last-Modified marker so the next poll re-reads every notification.
  * Needed whenever rules change, since a 304 would otherwise hide the existing backlog.
  */
 export async function resetPollMarkers(conn: Conn): Promise<void> {

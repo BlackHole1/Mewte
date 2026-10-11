@@ -7,7 +7,9 @@ import {
   insertHistory,
   insertRunLog,
   listAccounts,
+  listClearedThreads,
   listRules,
+  recordClearedThread,
   releaseLease,
   renewLease,
   setCached,
@@ -58,9 +60,14 @@ export function rulesForAccount(rules: Rule[], accountId: string): Rule[] {
 
 /**
  * Decides a condition, fetching extra GitHub data only while the answer is still open.
- * A condition that stays undecided after everything is loaded does not match.
+ * `null` means it stayed undecided after everything was loaded: GitHub did not provide what
+ * the condition needs, for example the state of a pull request in a repository the token
+ * cannot read.
  */
-export async function resolveCondition(condition: Condition, enricher: Enricher): Promise<boolean> {
+export async function decideCondition(
+  condition: Condition,
+  enricher: Enricher,
+): Promise<boolean | null> {
   let result = evaluateCondition(condition, enricher.context);
   if (result !== null) return result;
   const needs = requiredData(condition);
@@ -70,7 +77,12 @@ export async function resolveCondition(condition: Condition, enricher: Enricher)
     result = evaluateCondition(condition, enricher.context);
     if (result !== null) return result;
   }
-  return false;
+  return null;
+}
+
+/** Like `decideCondition`, with an undecided condition counted as not matching. */
+export async function resolveCondition(condition: Condition, enricher: Enricher): Promise<boolean> {
+  return (await decideCondition(condition, enricher)) ?? false;
 }
 
 /** The first rule, by priority, that matches. Later rules are not evaluated. */
@@ -95,6 +107,30 @@ function enrichmentCache(deps: Deps, accountId: string, updatedAt: string): Enri
     set: async (name, value) =>
       setCached(deps.conn, await key(name), value, deps.now() + CACHE_TTL_MS),
   };
+}
+
+/**
+ * The notifications a run looks at. GitHub lists the read ones still in the inbox together
+ * with the ones already marked as done, and nothing tells them apart, so:
+ *
+ * - a version of a thread that Mewte already cleared is left alone, even when someone marked
+ *   it unread again: that was done on purpose, and only new activity makes it a new version;
+ * - an unread notification is in the inbox for certain, so it is looked at;
+ * - a read one is looked at unless it predates the account's baseline, which only a run
+ *   asked to go through that backlog ignores.
+ *
+ * Marking a thread done a second time changes nothing on GitHub, so a read notification the
+ * user already cleared by hand costs a wasted request at worst.
+ */
+export function selectCandidates(
+  notifications: GitHubNotification[],
+  input: { baselineAt: number; cleared: Map<string, number>; backlog: boolean },
+): GitHubNotification[] {
+  return notifications.filter((notification) => {
+    const updatedAt = Date.parse(notification.updated_at);
+    if (input.cleared.get(notification.id) === updatedAt) return false;
+    return notification.unread || input.backlog || updatedAt >= input.baselineAt;
+  });
 }
 
 function clientFor(deps: Deps, token: string): GitHubClient {
@@ -155,16 +191,21 @@ async function execute(deps: Deps, account: AccountRecord, trigger: RunTrigger):
   let leaseRenewedAt = startedAt;
 
   try {
+    // Listed even when no rule applies, so the run reports what is waiting in the inbox.
     const rules = rulesForAccount(await listRules(deps.conn), account.id);
-    if (rules.length > 0) {
-      const client = clientFor(deps, await deps.cipher.decrypt(account.tokenEnc));
-      list = await client.listNotifications({
-        // A manual run always re-reads the backlog instead of trusting the 304 shortcut.
-        ifModifiedSince: trigger === "manual" ? undefined : (account.lastModified ?? undefined),
-      });
-      const notifications = list.notModified ? [] : list.notifications;
-      fetched = notifications.length;
+    const client = clientFor(deps, await deps.cipher.decrypt(account.tokenEnc));
+    list = await client.listNotifications({
+      // Only a scheduled run trusts the 304 shortcut; the others always re-read the list.
+      ifModifiedSince: trigger === "schedule" ? (account.lastModified ?? undefined) : undefined,
+    });
+    const notifications = selectCandidates(list.notModified ? [] : list.notifications, {
+      baselineAt: account.baselineAt,
+      cleared: await listClearedThreads(deps.conn, account.id),
+      backlog: trigger === "backlog",
+    });
+    fetched = notifications.length;
 
+    if (rules.length > 0) {
       for (const notification of notifications) {
         try {
           const enricher = createEnricher({
@@ -193,6 +234,13 @@ async function execute(deps: Deps, account: AccountRecord, trigger: RunTrigger):
                 processedAt: deps.now(),
               },
             ]);
+            // Last, so a failure above leaves the thread to be tried again.
+            await recordClearedThread(deps.conn, {
+              accountId: account.id,
+              threadId: notification.id,
+              updatedAt: Date.parse(notification.updated_at),
+              clearedAt: deps.now(),
+            });
           }
         } catch (error) {
           if (isFatal(error)) throw error;
@@ -276,10 +324,11 @@ function toPreview(notification: GitHubNotification, enricher: Enricher): Notifi
     reason: notification.reason,
     url: enricher.htmlUrl(),
     updatedAt: notification.updated_at,
+    private: notification.repository.private ?? false,
   };
 }
 
-/** Evaluates a condition against the live unread notifications without touching them. */
+/** Evaluates a condition against the notifications a run would look at, without touching them. */
 export async function dryRun(deps: Deps, input: DryRunInput): Promise<DryRunResult> {
   const accounts = (await listAccounts(deps.conn)).filter((account) =>
     scopeIncludes(input.accountScope, account.id),
@@ -288,12 +337,17 @@ export async function dryRun(deps: Deps, input: DryRunInput): Promise<DryRunResu
   const results: DryRunResult["accounts"] = [];
   for (const account of accounts) {
     const matches: NotificationPreview[] = [];
+    const undecided: NotificationPreview[] = [];
     let fetched = 0;
     let error: string | null = null;
     try {
       const client = clientFor(deps, await deps.cipher.decrypt(account.tokenEnc));
       const list = await client.listNotifications();
-      const notifications = list.notModified ? [] : list.notifications;
+      const notifications = selectCandidates(list.notModified ? [] : list.notifications, {
+        baselineAt: account.baselineAt,
+        cleared: await listClearedThreads(deps.conn, account.id),
+        backlog: false,
+      });
       fetched = notifications.length;
       for (const notification of notifications) {
         const enricher = createEnricher({
@@ -302,9 +356,9 @@ export async function dryRun(deps: Deps, input: DryRunInput): Promise<DryRunResu
           cache: enrichmentCache(deps, account.id, notification.updated_at),
         });
         try {
-          if (await resolveCondition(input.condition, enricher)) {
-            matches.push(toPreview(notification, enricher));
-          }
+          const decision = await decideCondition(input.condition, enricher);
+          if (decision) matches.push(toPreview(notification, enricher));
+          else if (decision === null) undecided.push(toPreview(notification, enricher));
         } catch (inner) {
           if (isFatal(inner)) throw inner;
           error ??= describe(inner);
@@ -313,7 +367,15 @@ export async function dryRun(deps: Deps, input: DryRunInput): Promise<DryRunResu
     } catch (outer) {
       error = describe(outer);
     }
-    results.push({ accountId: account.id, login: account.login, fetched, error, matches });
+    results.push({
+      accountId: account.id,
+      login: account.login,
+      fetched,
+      error,
+      matches,
+      undecided,
+      repoScope: account.scopes.split(",").includes("repo"),
+    });
   }
   return { accounts: results };
 }

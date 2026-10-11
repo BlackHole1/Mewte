@@ -4,6 +4,7 @@ export * from "./types";
 export * from "./upsert";
 export * from "./repos/accounts";
 export * from "./repos/cache";
+export * from "./repos/cleared";
 export * from "./repos/history";
 export * from "./repos/rate-limit";
 export * from "./repos/rules";

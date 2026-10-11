@@ -1,4 +1,5 @@
 import {
+  deleteClearedThreadsBefore,
   deleteExpiredAttempts,
   deleteExpiredCache,
   deleteExpiredSessions,
@@ -10,6 +11,8 @@ import { LOGIN_WINDOW_MS } from "./auth";
 import { loadSettings } from "./settings";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
+/** GitHub stops listing a thread long before this, so its record is no longer needed. */
+const CLEARED_THREAD_DAYS = 90;
 
 export interface CleanupResult {
   history: number;
@@ -28,6 +31,7 @@ export async function cleanup(deps: Pick<Deps, "conn" | "now">): Promise<Cleanup
   }
   await deleteExpiredSessions(deps.conn, now);
   await deleteExpiredCache(deps.conn, now);
+  await deleteClearedThreadsBefore(deps.conn, now - CLEARED_THREAD_DAYS * DAY_MS);
   await deleteExpiredAttempts(deps.conn, now, LOGIN_WINDOW_MS);
   return result;
 }

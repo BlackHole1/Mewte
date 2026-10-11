@@ -190,6 +190,8 @@ export const notificationPreviewSchema = z.object({
   reason: z.string(),
   url: z.string(),
   updatedAt: z.string(),
+  /** Whether the repository is private. */
+  private: z.boolean(),
 });
 export type NotificationPreview = z.infer<typeof notificationPreviewSchema>;
 
@@ -204,9 +206,14 @@ export const dryRunResultSchema = z.object({
     z.object({
       accountId: z.string(),
       login: z.string(),
+      /** Notifications the condition was checked against. */
       fetched: z.number().int(),
       error: z.string().nullable(),
       matches: z.array(notificationPreviewSchema),
+      /** Checked, but GitHub did not provide the data the condition needs. These never match. */
+      undecided: z.array(notificationPreviewSchema),
+      /** Whether the account's token can read the details of private repositories. */
+      repoScope: z.boolean(),
     }),
   ),
 });
@@ -269,7 +276,8 @@ export const historyPageSchema = paginated(historyItemSchema);
 
 // ---------- run logs ----------
 
-export const RUN_TRIGGERS = ["schedule", "manual"] as const;
+/** `backlog` is a manual run that also goes through the read notifications from before the baseline. */
+export const RUN_TRIGGERS = ["schedule", "manual", "backlog"] as const;
 export type RunTrigger = (typeof RUN_TRIGGERS)[number];
 export const RUN_STATUSES = ["success", "partial", "error"] as const;
 export type RunStatus = (typeof RUN_STATUSES)[number];
@@ -280,8 +288,11 @@ export const runLogSchema = z.object({
   accountLogin: z.string(),
   trigger: z.enum(RUN_TRIGGERS),
   status: z.enum(RUN_STATUSES),
+  /** Notifications checked against the rules. */
   fetched: z.number().int(),
+  /** How many of them matched a rule. */
   matched: z.number().int(),
+  /** How many were marked as done. */
   processed: z.number().int(),
   errors: z.array(z.string()),
   startedAt: z.number(),

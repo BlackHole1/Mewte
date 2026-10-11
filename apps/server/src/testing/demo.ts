@@ -15,8 +15,23 @@ const token = "ghp_valid_token_0000000000";
 
 // The stand-in account gets a real picture so the interface looks like it does in use.
 github.users.get(token)!.avatarUrl = "https://avatars.githubusercontent.com/u/583231?v=4";
+// What the link on the accounts page asks for, so details of private repositories are missing.
+github.users.get(token)!.scopes = "notifications";
 
-const samples = [
+interface Sample {
+  repo: string;
+  type: string;
+  title: string;
+  reason: string;
+  bot: boolean;
+  state: string | undefined;
+  /** Already read, which Mewte treats like an unread one. */
+  read?: boolean;
+  /** In a private repository, whose details the token cannot read. */
+  private?: boolean;
+}
+
+const samples: Sample[] = [
   {
     repo: "acme/widgets",
     type: "PullRequest",
@@ -64,6 +79,16 @@ const samples = [
     reason: "author",
     bot: false,
     state: "merged",
+    read: true,
+  },
+  {
+    repo: "acme/billing",
+    type: "PullRequest",
+    title: "Handle empty responses from the billing API",
+    reason: "review_requested",
+    bot: false,
+    state: "merged",
+    private: true,
   },
   {
     repo: "octo/docs",
@@ -167,7 +192,11 @@ samples.forEach((sample, index) => {
     reason: sample.reason,
     subjectPath: path,
     updatedAt: new Date(Date.now() - index * 3_600_000).toISOString(),
+    unread: !sample.read,
+    private: sample.private,
   });
+  // GitHub answers 404 for a private repository the token cannot read.
+  if (sample.private) return;
   const user = sample.bot
     ? { login: "dependabot[bot]", type: "Bot" }
     : { login: "octocat", type: "User" };
