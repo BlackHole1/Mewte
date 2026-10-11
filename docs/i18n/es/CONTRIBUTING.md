@@ -91,7 +91,7 @@ Los documentos en inglés de la raíz del repositorio son la fuente de referenci
 
 Las versiones se publican con el workflow **Release**, que se ejecuta a mano desde la pestaña Actions sobre la rama `main`. No se crea ningún commit para una versión.
 
-1. Deja **version** vacío para aumentar la última etiqueta `vX.Y.Z` según el **bump** elegido (patch, minor o major), o escribe un `X.Y.Z` exacto. La primera versión usa la versión del `package.json` de la raíz.
+1. Deja **version** vacío para aumentar la última etiqueta `vX.Y.Z` según el **bump** elegido (patch, minor o major), o escribe un `X.Y.Z` exacto.
 2. El workflow construye la imagen, comprueba que arranca y la sube a `ghcr.io/blackhole1/mewte` como `X.Y.Z`, `X.Y` y `latest`, para linux/amd64 y linux/arm64.
 3. Después etiqueta el commit como `vX.Y.Z` y publica una GitHub Release con notas generadas automáticamente.
 

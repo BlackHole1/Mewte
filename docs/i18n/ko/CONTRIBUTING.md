@@ -91,7 +91,7 @@ bun run test:all
 
 릴리스는 **Release** 워크플로로 만듭니다. Actions 탭에서 `main` 브랜치를 대상으로 직접 실행합니다. 릴리스를 위한 커밋은 만들어지지 않습니다.
 
-1. **version**을 비워 두면 선택한 **bump**(patch, minor, major)에 따라 최신 `vX.Y.Z` 태그를 올립니다. 정확한 `X.Y.Z`를 입력할 수도 있습니다. 첫 릴리스는 루트 `package.json`의 버전을 사용합니다.
+1. **version**을 비워 두면 선택한 **bump**(patch, minor, major)에 따라 최신 `vX.Y.Z` 태그를 올립니다. 정확한 `X.Y.Z`를 입력할 수도 있습니다.
 2. 워크플로는 이미지를 빌드하고 정상적으로 시작되는지 확인한 다음, `X.Y.Z`, `X.Y`, `latest`로 `ghcr.io/blackhole1/mewte`에 푸시합니다. 대상은 linux/amd64와 linux/arm64입니다.
 3. 이어서 해당 커밋에 `vX.Y.Z` 태그를 붙이고, 자동 생성된 노트와 함께 GitHub Release를 게시합니다.
 
