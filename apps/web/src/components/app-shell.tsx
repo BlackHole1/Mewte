@@ -15,6 +15,7 @@ import {
 import type { ComponentType, SVGProps } from "react";
 import { useTranslation } from "react-i18next";
 import { NavLink, Outlet, useLocation } from "react-router";
+import { GitHubIcon, REPO_URL } from "@/components/github-icon";
 import { LogoMark } from "@/components/logo";
 import {
   Menu,
@@ -141,6 +142,10 @@ function UserMenu({ username }: { username: string }) {
             <MenuLinkItem href="/api/docs" rel="noreferrer" target="_blank">
               <BookOpenIcon aria-hidden="true" />
               {t("nav.apiDocs")}
+            </MenuLinkItem>
+            <MenuLinkItem href={REPO_URL} rel="noreferrer" target="_blank">
+              <GitHubIcon />
+              GitHub
             </MenuLinkItem>
             <MenuSeparator />
             <MenuItem onClick={() => logout.mutate()}>
