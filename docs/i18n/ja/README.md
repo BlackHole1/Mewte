@@ -13,6 +13,11 @@ GitHub の受信トレイを静かに保つ: ルールに従って通知を完�
 [![Image](https://img.shields.io/badge/ghcr.io-blackhole1%2Fmewte-2496ED?logo=docker&logoColor=white)](https://github.com/BlackHole1/Mewte/pkgs/container/mewte)
 [![License](https://img.shields.io/github/license/BlackHole1/Mewte)](../../../LICENSE)
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../../../docs/screenshots/ja/dashboard-dark.png">
+  <img src="../../../docs/screenshots/ja/dashboard.png" alt="Mewte のダッシュボード" width="820">
+</picture>
+
 </div>
 
 Mewte は GitHub アカウントの通知を定期的に確認し、ルールに一致したものを完了としてマークして、履歴を残します。自分で動かすので、トークンがサーバーの外に出ることはありません。
@@ -28,6 +33,27 @@ Mewte は GitHub アカウントの通知を定期的に確認し、ルールに
 - 1人用のサインインで、2要素認証も利用できます。
 - SQLite、PostgreSQL、MySQL に対応しています。
 - 8つの表示言語と、ライト / ダークテーマ。
+
+## スクリーンショット
+
+<table>
+  <tr>
+    <td rowspan="2" width="50%" valign="top">
+      <img src="../../../docs/screenshots/ja/rule-editor.png" alt="ネストした条件と、ルールが処理する通知のプレビュー"><br>
+      <sub>ネストした条件と、ルールが処理する通知のプレビュー</sub>
+    </td>
+    <td width="50%" valign="top">
+      <img src="../../../docs/screenshots/ja/rules.png" alt="ルールは上から順に判定されます"><br>
+      <sub>ルールは上から順に判定されます</sub>
+    </td>
+  </tr>
+  <tr>
+    <td valign="top">
+      <img src="../../../docs/screenshots/ja/history.png" alt="ルールが処理したすべての通知"><br>
+      <sub>ルールが処理したすべての通知</sub>
+    </td>
+  </tr>
+</table>
 
 ## クイックスタート
 

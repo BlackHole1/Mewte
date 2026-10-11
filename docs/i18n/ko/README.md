@@ -13,6 +13,11 @@ GitHub 받은 편지함을 조용하게: 규칙에 따라 알림을 완료로 �
 [![Image](https://img.shields.io/badge/ghcr.io-blackhole1%2Fmewte-2496ED?logo=docker&logoColor=white)](https://github.com/BlackHole1/Mewte/pkgs/container/mewte)
 [![License](https://img.shields.io/github/license/BlackHole1/Mewte)](../../../LICENSE)
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../../../docs/screenshots/ko/dashboard-dark.png">
+  <img src="../../../docs/screenshots/ko/dashboard.png" alt="Mewte 대시보드" width="820">
+</picture>
+
 </div>
 
 Mewte는 GitHub 계정의 알림을 주기적으로 확인하고, 규칙과 일치하는 알림을 완료로 표시하며, 기록을 남깁니다. 직접 실행하므로 토큰은 서버 밖으로 나가지 않습니다.
@@ -28,6 +33,27 @@ Mewte는 GitHub 계정의 알림을 주기적으로 확인하고, 규칙과 일�
 - 단일 사용자 로그인과 선택적 2단계 인증.
 - SQLite, PostgreSQL, MySQL 지원.
 - 8개 인터페이스 언어, 라이트 및 다크 테마.
+
+## 스크린샷
+
+<table>
+  <tr>
+    <td rowspan="2" width="50%" valign="top">
+      <img src="../../../docs/screenshots/ko/rule-editor.png" alt="중첩 조건과 규칙이 정리할 알림 미리 보기"><br>
+      <sub>중첩 조건과 규칙이 정리할 알림 미리 보기</sub>
+    </td>
+    <td width="50%" valign="top">
+      <img src="../../../docs/screenshots/ko/rules.png" alt="규칙은 위에서 아래로 차례로 확인됩니다"><br>
+      <sub>규칙은 위에서 아래로 차례로 확인됩니다</sub>
+    </td>
+  </tr>
+  <tr>
+    <td valign="top">
+      <img src="../../../docs/screenshots/ko/history.png" alt="규칙이 정리한 모든 알림"><br>
+      <sub>규칙이 정리한 모든 알림</sub>
+    </td>
+  </tr>
+</table>
 
 ## 빠른 시작
 

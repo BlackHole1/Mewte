@@ -13,6 +13,11 @@ Keep your GitHub inbox quiet: a self-hosted tool that marks notifications as don
 [![Image](https://img.shields.io/badge/ghcr.io-blackhole1%2Fmewte-2496ED?logo=docker&logoColor=white)](https://github.com/BlackHole1/Mewte/pkgs/container/mewte)
 [![License](https://img.shields.io/github/license/BlackHole1/Mewte)](LICENSE)
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/en/dashboard-dark.png">
+  <img src="docs/screenshots/en/dashboard.png" alt="The Mewte dashboard" width="820">
+</picture>
+
 </div>
 
 Mewte checks the notifications of your GitHub accounts on a schedule, marks the ones that match your rules as done, and keeps a history. You run it yourself, so your tokens never leave your server.
@@ -28,6 +33,27 @@ Mewte checks the notifications of your GitHub accounts on a schedule, marks the 
 - Single-user sign-in with optional two-factor authentication.
 - SQLite, PostgreSQL or MySQL.
 - 8 interface languages, light and dark themes.
+
+## Screenshots
+
+<table>
+  <tr>
+    <td rowspan="2" width="50%" valign="top">
+      <img src="docs/screenshots/en/rule-editor.png" alt="Nested conditions, with a preview of what the rule would clear"><br>
+      <sub>Nested conditions, with a preview of what the rule would clear</sub>
+    </td>
+    <td width="50%" valign="top">
+      <img src="docs/screenshots/en/rules.png" alt="Rules, checked from top to bottom"><br>
+      <sub>Rules, checked from top to bottom</sub>
+    </td>
+  </tr>
+  <tr>
+    <td valign="top">
+      <img src="docs/screenshots/en/history.png" alt="Everything a rule has cleared"><br>
+      <sub>Everything a rule has cleared</sub>
+    </td>
+  </tr>
+</table>
 
 ## Quick start
 

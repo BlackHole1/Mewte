@@ -13,6 +13,11 @@
 [![Image](https://img.shields.io/badge/ghcr.io-blackhole1%2Fmewte-2496ED?logo=docker&logoColor=white)](https://github.com/BlackHole1/Mewte/pkgs/container/mewte)
 [![License](https://img.shields.io/github/license/BlackHole1/Mewte)](../../../LICENSE)
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../../../docs/screenshots/ru/dashboard-dark.png">
+  <img src="../../../docs/screenshots/ru/dashboard.png" alt="Панель Mewte" width="820">
+</picture>
+
 </div>
 
 Mewte по расписанию проверяет уведомления ваших аккаунтов GitHub, отмечает как выполненные те, что подходят под правила, и ведёт историю. Вы запускаете его сами, поэтому токены не покидают ваш сервер.
@@ -28,6 +33,27 @@ Mewte по расписанию проверяет уведомления ваш
 - Вход для одного пользователя с необязательной двухфакторной аутентификацией.
 - SQLite, PostgreSQL или MySQL.
 - 8 языков интерфейса, светлая и тёмная темы.
+
+## Скриншоты
+
+<table>
+  <tr>
+    <td rowspan="2" width="50%" valign="top">
+      <img src="../../../docs/screenshots/ru/rule-editor.png" alt="Вложенные условия и предпросмотр того, что уберёт правило"><br>
+      <sub>Вложенные условия и предпросмотр того, что уберёт правило</sub>
+    </td>
+    <td width="50%" valign="top">
+      <img src="../../../docs/screenshots/ru/rules.png" alt="Правила проверяются сверху вниз"><br>
+      <sub>Правила проверяются сверху вниз</sub>
+    </td>
+  </tr>
+  <tr>
+    <td valign="top">
+      <img src="../../../docs/screenshots/ru/history.png" alt="Всё, что убрали правила"><br>
+      <sub>Всё, что убрали правила</sub>
+    </td>
+  </tr>
+</table>
 
 ## Быстрый старт
 
