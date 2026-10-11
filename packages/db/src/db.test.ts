@@ -434,5 +434,48 @@ describe.each(testDialects())("repositories on %s", (kind) => {
     await repo.deleteExpiredCache(conn, 300);
     expect(await repo.getCached(conn, "k1", 0)).toBeUndefined();
     expect(await repo.getCached(conn, "k2", 500)).toBeDefined();
+    await repo.clearCache(conn);
+    expect(await repo.getCached(conn, "k2", 500)).toBeUndefined();
+  });
+
+  it("remembers the version of a thread that was cleared", async () => {
+    const updatedAt = Date.parse("2026-10-11T08:00:00Z");
+    await repo.recordClearedThread(conn, {
+      accountId: "a",
+      threadId: "1",
+      updatedAt,
+      clearedAt: 10,
+    });
+    await repo.recordClearedThread(conn, {
+      accountId: "a",
+      threadId: "2",
+      updatedAt,
+      clearedAt: 20,
+    });
+    await repo.recordClearedThread(conn, {
+      accountId: "b",
+      threadId: "1",
+      updatedAt,
+      clearedAt: 30,
+    });
+    // A later version of the same thread replaces the earlier one.
+    await repo.recordClearedThread(conn, {
+      accountId: "a",
+      threadId: "1",
+      updatedAt: updatedAt + 1000,
+      clearedAt: 40,
+    });
+    expect(await repo.listClearedThreads(conn, "a")).toEqual(
+      new Map([
+        ["1", updatedAt + 1000],
+        ["2", updatedAt],
+      ]),
+    );
+
+    await repo.deleteClearedThreadsBefore(conn, 30);
+    expect([...(await repo.listClearedThreads(conn, "a")).keys()]).toEqual(["1"]);
+    await repo.deleteClearedThreads(conn, "a");
+    expect((await repo.listClearedThreads(conn, "a")).size).toBe(0);
+    expect((await repo.listClearedThreads(conn, "b")).size).toBe(1);
   });
 });
