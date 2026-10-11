@@ -1,0 +1,24 @@
+# Throwaway databases for running the test suite against PostgreSQL and MySQL.
+#   docker compose -f compose.test.yaml up -d
+#   cp .env.test.example .env.test && bun run test:all
+name: mewte-test
+services:
+  postgres:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_USER: mewte
+      POSTGRES_PASSWORD: mewte
+      POSTGRES_DB: mewte
+    ports:
+      - "127.0.0.1:12510:5432"
+    tmpfs:
+      - /var/lib/postgresql
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_ROOT_PASSWORD: mewte
+      MYSQL_DATABASE: mewte
+    ports:
+      - "127.0.0.1:12511:3306"
+    tmpfs:
+      - /var/lib/mysql

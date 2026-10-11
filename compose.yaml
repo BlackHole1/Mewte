@@ -1,0 +1,72 @@
+# Mewte with Docker Compose.
+#
+#   docker compose up -d
+#
+# That is all the default setup needs: data lives in a SQLite file on the
+# `mewte-data` volume. To use PostgreSQL or MySQL instead, copy .env.example
+# to .env and follow the comments there.
+name: mewte
+
+services:
+  mewte:
+    image: ghcr.io/blackhole1/mewte:${MEWTE_VERSION:-latest}
+    restart: unless-stopped
+    ports:
+      - "${MEWTE_PORT:-3000}:3000"
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-sqlite:///data/mewte.db}
+      # Empty values below mean "not set".
+      SECRET_KEY: ${SECRET_KEY:-}
+      SETUP_TOKEN: ${SETUP_TOKEN:-}
+      TRUST_PROXY: ${TRUST_PROXY:-}
+      COOKIE_SECURE: ${COOKIE_SECURE:-}
+      GITHUB_API_URL: ${GITHUB_API_URL:-}
+    volumes:
+      - mewte-data:/data
+    depends_on:
+      postgres:
+        condition: service_healthy
+        required: false
+      mysql:
+        condition: service_healthy
+        required: false
+
+  # Started only with COMPOSE_PROFILES=postgres.
+  postgres:
+    profiles: [postgres]
+    image: postgres:18-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: mewte
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-}
+      POSTGRES_DB: mewte
+    volumes:
+      - postgres-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mewte -d mewte"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  # Started only with COMPOSE_PROFILES=mysql.
+  mysql:
+    profiles: [mysql]
+    image: mysql:8.4
+    restart: unless-stopped
+    environment:
+      MYSQL_RANDOM_ROOT_PASSWORD: "yes"
+      MYSQL_USER: mewte
+      MYSQL_PASSWORD: ${DB_PASSWORD:-}
+      MYSQL_DATABASE: mewte
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", 'mysqladmin ping -h 127.0.0.1 -u mewte -p"$$MYSQL_PASSWORD" --silent']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  mewte-data:
+  postgres-data:
+  mysql-data:

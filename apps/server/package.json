@@ -1,0 +1,21 @@
+{
+  "name": "@mewte/server",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "bun --watch src/index.ts",
+    "build": "tsdown",
+    "start": "bun dist/index.mjs",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@hono/zod-openapi": "^1.6.3",
+    "@mewte/db": "workspace:*",
+    "@mewte/shared": "workspace:*",
+    "@scalar/hono-api-reference": "^0.12.11",
+    "hono": "^4.13.13",
+    "otpauth": "^9.5.2",
+    "zod": "^4.6.5"
+  }
+}

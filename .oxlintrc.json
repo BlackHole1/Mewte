@@ -1,0 +1,16 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["typescript", "unicorn", "oxc", "react", "import"],
+  "categories": {
+    "correctness": "error",
+    "suspicious": "warn"
+  },
+  "rules": {
+    "react/react-in-jsx-scope": "off",
+    "import/no-unassigned-import": "off",
+    "unicorn/consistent-function-scoping": "off",
+    "import/no-named-as-default-member": "off",
+    "no-underscore-dangle": "off"
+  },
+  "ignorePatterns": ["**/dist/**", "**/node_modules/**", "apps/web/src/components/ui/**"]
+}

@@ -1,0 +1,27 @@
+{
+  "name": "mewte",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "type": "module",
+  "scripts": {
+    "dev": "bun run --filter '@mewte/server' --filter '@mewte/web' dev",
+    "build": "bun run --filter '@mewte/shared' build && bun run --filter '@mewte/db' build && bun run --filter '@mewte/server' --filter '@mewte/web' build",
+    "test": "bun --bun vitest run",
+    "lint": "oxlint",
+    "fmt": "oxfmt",
+    "fmt:check": "oxfmt --check",
+    "typecheck": "bun run --filter '*' typecheck",
+    "test:all": "bun --env-file=.env.test --bun vitest run"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "oxfmt": "^0.72.0",
+    "oxlint": "^1.87.0",
+    "tsdown": "^0.23.1",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.3"
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "name": "@mewte/db",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./testing": "./src/testing.ts"
+  },
+  "scripts": {
+    "build": "tsdown",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@mewte/shared": "workspace:*",
+    "kysely": "^0.29.6",
+    "mysql2": "^3.24.5",
+    "pg": "^8.23.1"
+  },
+  "devDependencies": {
+    "@types/pg": "latest"
+  }
+}

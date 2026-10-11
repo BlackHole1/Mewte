@@ -1,0 +1,12 @@
+node_modules
+dist
+data
+.env
+.env.*
+!.env.example
+!.env.test.example
+*.tsbuildinfo
+coverage
+.DS_Store
+.claude/
+skills-lock.json

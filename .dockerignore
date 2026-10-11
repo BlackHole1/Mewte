@@ -1,0 +1,15 @@
+**/node_modules
+**/dist
+**/*.tsbuildinfo
+data
+coverage
+.git
+.github
+.claude
+.env
+.env.*
+docs
+*.md
+compose*.yaml
+Dockerfile
+.DS_Store
