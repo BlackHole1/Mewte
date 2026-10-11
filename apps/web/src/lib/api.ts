@@ -100,6 +100,7 @@ export const api = {
   createAccount: (input: CreateAccountInput) => request<Account>("POST", "/accounts", input),
   updateAccount: (id: string, input: UpdateAccountInput) =>
     request<Account>("PATCH", `/accounts/${id}`, input),
+  verifyAccount: (id: string) => request<Account>("POST", `/accounts/${id}/verify`),
   deleteAccount: (id: string) => request<{ ok: true }>("DELETE", `/accounts/${id}`),
   runAccount: (id: string) => request<RunLog>("POST", `/accounts/${id}/run`),
   runBacklog: (id: string) => request<RunLog>("POST", `/accounts/${id}/backlog`),

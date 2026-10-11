@@ -12,7 +12,7 @@ import {
 import type { Condition, ConditionLeaf, RuleInput } from "@mewte/shared";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { type Harness, VALID_TOKEN, createHarness } from "../testing/harness";
-import { bindAccount, editAccount } from "./accounts";
+import { bindAccount, editAccount, verifyAccount } from "./accounts";
 import { dryRun, rulesForAccount, runAccount, scopeIncludes } from "./runner";
 import { createScheduler } from "./scheduler";
 
@@ -241,6 +241,56 @@ describe("runAccount", () => {
     });
     await editAccount(h.deps, accountId, { token: VALID_TOKEN });
     expect(await run()).toMatchObject({ fetched: 1, matched: 1, processed: 1 });
+  });
+
+  it("notices on its own that the token's scopes were edited on GitHub", async () => {
+    h.github.users.set(VALID_TOKEN, { id: 1, login: "octocat", scopes: "notifications" });
+    await verifyAccount(h.deps, accountId);
+    h.github.addNotification({ id: "9", repo: "private/repo", private: true });
+    await addRule(all(leaf({ field: "state", operator: "in", value: ["merged"] })));
+    expect(await run("schedule")).toMatchObject({ fetched: 1, matched: 0 });
+    expect((await getAccount(h.deps.conn, accountId))?.lastModified).toBe(h.github.lastModified);
+
+    // The repo scope was added to the same token, so the repository is readable now.
+    h.github.users.set(VALID_TOKEN, { id: 1, login: "octocat", scopes: "notifications, repo" });
+    h.github.resource("private/repo/pulls/9", {
+      user: { login: "a" },
+      state: "closed",
+      merged: true,
+    });
+    h.clock.advance(300_000);
+    // GitHub answers 304, yet reports the new scopes, which is reason enough to look again.
+    expect(await run("schedule")).toMatchObject({ fetched: 0 });
+    expect(await getAccount(h.deps.conn, accountId)).toMatchObject({
+      scopes: "notifications,repo",
+      lastModified: null,
+    });
+    h.clock.advance(300_000);
+    expect(await run("schedule")).toMatchObject({ fetched: 1, matched: 1, processed: 1 });
+  });
+
+  it("looks up details again once a check finds new scopes", async () => {
+    h.github.addNotification({ id: "9", repo: "private/repo", private: true });
+    await addRule(all(leaf({ field: "state", operator: "in", value: ["merged"] })));
+    expect(await run("schedule")).toMatchObject({ fetched: 1, matched: 0 });
+
+    h.github.users.set(VALID_TOKEN, {
+      id: 1,
+      login: "octocat",
+      scopes: "notifications, repo, gist",
+    });
+    h.github.resource("private/repo/pulls/9", {
+      user: { login: "a" },
+      state: "closed",
+      merged: true,
+    });
+    h.clock.advance(1000);
+    expect(await verifyAccount(h.deps, accountId)).toMatchObject({
+      scopes: "notifications,repo,gist",
+      lastModified: null,
+      nextRunAt: h.clock.now,
+    });
+    expect(await run("schedule")).toMatchObject({ fetched: 1, matched: 1, processed: 1 });
   });
 
   it("fetches subject details only when a rule cannot be decided without them", async () => {

@@ -112,6 +112,35 @@ describe.each(testDialects())("API on %s", (kind) => {
     expect((await h.request("PATCH", "/api/accounts/missing", { enabled: true })).status).toBe(404);
     await h.request("PATCH", `/api/accounts/${account.id}`, { enabled: true });
 
+    // The token's scopes were edited on GitHub: checking again shows them without a new token.
+    h.github.users.set(VALID_TOKEN, { id: 1, login: "octocat", scopes: "notifications" });
+    const narrowed = await h.request("POST", `/api/accounts/${account.id}/verify`);
+    expect(narrowed.status).toBe(200);
+    expect(await body<Account>(narrowed)).toMatchObject({
+      scopes: ["notifications"],
+      status: "ok",
+    });
+    h.github.users.set(VALID_TOKEN, { id: 1, login: "octocat", scopes: "read:user" });
+    expect(
+      await body<Account>(await h.request("POST", `/api/accounts/${account.id}/verify`)),
+    ).toMatchObject({
+      scopes: ["read:user"],
+      status: "error",
+      lastError: "The token no longer has the notifications scope",
+    });
+    h.github.users.delete(VALID_TOKEN);
+    expect(
+      await body<Account>(await h.request("POST", `/api/accounts/${account.id}/verify`)),
+    ).toMatchObject({ scopes: ["read:user"], status: "unauthorized", nextRunAt: null });
+    h.github.users.set(VALID_TOKEN, { id: 1, login: "octocat", scopes: "notifications, repo" });
+    const restored = await h.request("POST", `/api/accounts/${account.id}/verify`);
+    expect(await body<Account>(restored)).toMatchObject({
+      scopes: ["notifications", "repo"],
+      status: "ok",
+      lastError: null,
+    });
+    expect((await h.request("POST", "/api/accounts/missing/verify")).status).toBe(404);
+
     // Rules
     expect((await h.request("POST", "/api/rules", ruleInput({ name: "" }))).status).toBe(400);
     const emptyGroup = ruleInput({ condition: { type: "group", op: "and", children: [] } });
@@ -720,6 +749,7 @@ describe("OpenAPI document", () => {
           "/api/accounts/{id}",
           "/api/accounts/{id}/backlog",
           "/api/accounts/{id}/run",
+          "/api/accounts/{id}/verify",
           "/api/auth/login",
           "/api/auth/logout",
           "/api/auth/password",

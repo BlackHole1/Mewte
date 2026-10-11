@@ -53,14 +53,18 @@ export interface GitHubNotification {
   };
 }
 
-export type NotificationList =
-  | { notModified: true; pollIntervalSec: number | undefined }
+export type NotificationList = {
+  pollIntervalSec: number | undefined;
+  /** The token's scopes as of this response. Undefined when GitHub did not report them. */
+  scopes: string[] | undefined;
+} & (
+  | { notModified: true }
   | {
       notModified: false;
       notifications: GitHubNotification[];
       lastModified: string | undefined;
-      pollIntervalSec: number | undefined;
-    };
+    }
+);
 
 export interface GitHubClientOptions {
   token: string;
@@ -94,6 +98,16 @@ function nextLink(header: string | null): string | undefined {
     if (match) return match[1];
   }
   return undefined;
+}
+
+/** Classic tokens get their scopes back on every response, so a change shows up at once. */
+function parseScopes(headers: Headers): string[] | undefined {
+  const header = headers.get("x-oauth-scopes");
+  if (header === null) return undefined;
+  return header
+    .split(",")
+    .map((scope) => scope.trim())
+    .filter(Boolean);
 }
 
 function parseInteger(value: string | null): number | undefined {
@@ -198,11 +212,12 @@ export function createGitHubClient(options: GitHubClientOptions): GitHubClient {
     async getAuthenticatedUser() {
       const response = await request("/user");
       const body = (await response.json()) as { id: number; login: string; avatar_url: string };
-      const scopes = (response.headers.get("x-oauth-scopes") ?? "")
-        .split(",")
-        .map((scope) => scope.trim())
-        .filter(Boolean);
-      return { id: body.id, login: body.login, avatarUrl: body.avatar_url, scopes };
+      return {
+        id: body.id,
+        login: body.login,
+        avatarUrl: body.avatar_url,
+        scopes: parseScopes(response.headers) ?? [],
+      };
     },
 
     async listNotifications({ ifModifiedSince } = {}) {
@@ -211,7 +226,8 @@ export function createGitHubClient(options: GitHubClientOptions): GitHubClient {
 
       const first = await request("/notifications?all=true&per_page=50", { headers });
       const pollIntervalSec = parseInteger(first.headers.get("x-poll-interval"));
-      if (first.status === 304) return { notModified: true, pollIntervalSec };
+      const scopes = parseScopes(first.headers);
+      if (first.status === 304) return { notModified: true, pollIntervalSec, scopes };
 
       const notifications = (await first.json()) as GitHubNotification[];
       let next = nextLink(first.headers.get("link"));
@@ -225,6 +241,7 @@ export function createGitHubClient(options: GitHubClientOptions): GitHubClient {
         notifications,
         lastModified: first.headers.get("last-modified") ?? undefined,
         pollIntervalSec,
+        scopes,
       };
     },
 
@@ -254,6 +271,11 @@ export function createGitHubClient(options: GitHubClientOptions): GitHubClient {
       return body.data;
     },
   };
+}
+
+/** Whether two scope lists name the same scopes, in any order. */
+export function sameScopes(a: string[], b: string[]): boolean {
+  return a.toSorted().join() === b.toSorted().join();
 }
 
 /** Scopes a classic token needs, and what is lost without the optional one. */
