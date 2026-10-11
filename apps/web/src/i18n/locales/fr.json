@@ -214,7 +214,11 @@
     "previewRunning": "Vérification des notifications…",
     "previewAccount": "{{login}} : {{matched}} sur {{fetched}} en correspondance",
     "previewNoMatch": "Aucune notification non lue ne correspond.",
-    "previewError": "Impossible de vérifier ce compte : {{message}}"
+    "previewError": "Impossible de vérifier ce compte : {{message}}",
+    "fileSynced": "Les règles sont synchronisées avec {{path}}. Modifier ce fichier change les règles, et enregistrer une règle ici réécrit le fichier.",
+    "fileInvalid": "Le fichier de règles contient des erreurs",
+    "fileInvalidHint": "Les modifications de {{path}} n'ont pas été appliquées. Les règles ci-dessous sont les dernières valides.",
+    "fileProblemLine": "Ligne {{line}} : {{message}}"
   },
   "conditions": {
     "modes": {

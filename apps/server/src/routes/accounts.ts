@@ -1,5 +1,5 @@
 import { createRoute } from "@hono/zod-openapi";
-import { deleteAccount, getAccount, listAccounts } from "@mewte/db";
+import { deleteAccount, getAccount, listAccounts, listRules } from "@mewte/db";
 import {
   accountSchema,
   createAccountInputSchema,
@@ -60,6 +60,8 @@ export function accountRoutes(deps: Deps) {
     async (c) => {
       const input = c.req.valid("json");
       const record = await bindAccount(deps, input);
+      // A rules file that named this account before it was connected can be applied now.
+      await deps.rulesFile.sync({ force: true });
       return c.json(toAccount(record, deps.now()), 201);
     },
   );
@@ -99,7 +101,13 @@ export function accountRoutes(deps: Deps) {
     async (c) => {
       const { id } = c.req.valid("param");
       if (!(await getAccount(deps.conn, id))) throw notFound("Account");
+      const scoped = (await listRules(deps.conn)).some(
+        (rule) =>
+          rule.accountScope.type === "accounts" && rule.accountScope.accountIds.includes(id),
+      );
       await deleteAccount(deps.conn, id);
+      // The rules file names accounts by login, which this account no longer has.
+      if (scoped) await deps.rulesFile.save();
       return c.json({ ok: true as const }, 200);
     },
   );

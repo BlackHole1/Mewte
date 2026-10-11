@@ -14,6 +14,7 @@ import type {
   RecoveryCodes,
   Rule,
   RuleInput,
+  RulesSource,
   RunLog,
   RunQuery,
   Settings,
@@ -103,6 +104,7 @@ export const api = {
   runAccount: (id: string) => request<RunLog>("POST", `/accounts/${id}/run`),
 
   rules: () => request<Rule[]>("GET", "/rules"),
+  rulesSource: () => request<RulesSource>("GET", "/rules/source"),
   rule: (id: string) => request<Rule>("GET", `/rules/${id}`),
   createRule: (input: RuleInput) => request<Rule>("POST", "/rules", input),
   updateRule: (id: string, input: RuleInput) => request<Rule>("PUT", `/rules/${id}`, input),

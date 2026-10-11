@@ -6,6 +6,7 @@ export const keys = {
   status: ["status"] as const,
   accounts: ["accounts"] as const,
   rules: ["rules"] as const,
+  rulesSource: ["rules-source"] as const,
   rule: (id: string) => ["rules", id] as const,
   history: ["history"] as const,
   runs: ["runs"] as const,
@@ -50,4 +51,20 @@ export const useAccounts = (options: { poll?: boolean } = {}) =>
     refetchInterval: options.poll ? 15_000 : false,
   });
 
-export const useRules = () => useQuery({ queryKey: keys.rules, queryFn: api.rules });
+/** How often the rules page looks for edits made in the rules file. */
+const RULES_FILE_POLL_MS = 5000;
+
+export const useRulesSource = () =>
+  useQuery({
+    queryKey: keys.rulesSource,
+    queryFn: api.rulesSource,
+    refetchInterval: (query) => (query.state.data?.enabled ? RULES_FILE_POLL_MS : false),
+  });
+
+/** With `poll`, picks up rules that were changed in the rules file while the page is open. */
+export const useRules = (options: { poll?: boolean } = {}) =>
+  useQuery({
+    queryKey: keys.rules,
+    queryFn: api.rules,
+    refetchInterval: options.poll ? RULES_FILE_POLL_MS : false,
+  });

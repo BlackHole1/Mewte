@@ -726,6 +726,7 @@ describe("OpenAPI document", () => {
           "/api/history",
           "/api/rules",
           "/api/rules/dry-run",
+          "/api/rules/source",
           "/api/rules/{id}",
           "/api/runs",
           "/api/settings",

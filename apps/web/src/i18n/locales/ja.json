@@ -214,7 +214,11 @@
     "previewRunning": "通知を確認中…",
     "previewAccount": "{{login}}: {{fetched}}件中{{matched}}件が一致",
     "previewNoMatch": "一致する未読通知はありません。",
-    "previewError": "このアカウントを確認できませんでした: {{message}}"
+    "previewError": "このアカウントを確認できませんでした: {{message}}",
+    "fileSynced": "ルールは {{path}} と同期されています。このファイルを編集するとルールが変わり、ここでルールを保存するとファイルが書き直されます。",
+    "fileInvalid": "ルールファイルにエラーがあります",
+    "fileInvalidHint": "{{path}} の編集内容は適用されていません。下に表示されているのは、最後に有効だったルールです。",
+    "fileProblemLine": "{{line}} 行目: {{message}}"
   },
   "conditions": {
     "modes": {

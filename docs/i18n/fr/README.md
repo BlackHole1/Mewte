@@ -21,6 +21,7 @@ Mewte vérifie régulièrement les notifications de vos comptes GitHub, marque c
 
 - Plusieurs comptes GitHub, chacun avec son propre intervalle d'interrogation.
 - Des règles créées dans le navigateur, avec des conditions imbriquées sur le dépôt, le motif, le type, l'état, le titre, les étiquettes, l'auteur et plus encore.
+- Les règles sont aussi un fichier YAML : vous ou un assistant IA pouvez les modifier sans le navigateur.
 - Issues, pull requests et discussions.
 - Un aperçu de ce qu'une règle traiterait avant de lui faire confiance.
 - Un historique de tout ce qui a été traité, avec un lien vers chaque fil.
@@ -58,6 +59,16 @@ Les jetons sont stockés chiffrés et ne sont plus jamais affichés. Avec l'auth
 - Une condition qui dépend de données que GitHub ne fournit pas ne correspond jamais : rien n'est traité par erreur.
 - GitHub ne peut pas restaurer une notification marquée comme terminée. L'historique conserve un lien vers chacune.
 
+### Fichier de règles
+
+Les règles sont synchronisées avec `rules.yaml` dans le répertoire de données. Mewte charge le fichier quand il change et le réécrit quand vous enregistrez une règle dans le navigateur. Modifiez une copie et vérifiez-la avant de remplacer le fichier :
+
+```bash
+docker compose exec mewte mewte validate-rules /data/rules.new.yaml
+```
+
+Le format est décrit à l'adresse `/llms.txt` de votre instance, rédigé pour qu'un assistant IA puisse faire la modification.
+
 ## Configuration
 
 Les réglages sont des variables d'environnement. Avec Docker Compose, placez-les dans un fichier `.env` à côté de `compose.yaml`. [.env.example](../../../.env.example) les énumère toutes.
@@ -69,6 +80,7 @@ Les réglages sont des variables d'environnement. Avec Docker Compose, placez-le
 | `SETUP_TOKEN` | aucune | Si elle est définie, la page de configuration demande cette valeur avant de créer le compte propriétaire. |
 | `TRUST_PROXY` | `false` | Définissez-la sur `true` derrière un reverse proxy. |
 | `GITHUB_API_URL` | `https://api.github.com` | Pour GitHub Enterprise Server, utilisez `https://<host>/api/v3`. |
+| `RULES_FILE` | `rules.yaml` dans le volume de données avec SQLite, aucune sinon | Chemin du fichier de règles. `off` le désactive. |
 | `MEWTE_PORT` | `3000` | Port de l'hôte utilisé par Docker Compose. |
 
 Si vous perdez `SECRET_KEY`, les jetons stockés deviennent illisibles.

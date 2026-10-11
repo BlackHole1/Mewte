@@ -1,0 +1,234 @@
+# Mewte
+
+> Mewte is a self-hosted tool that polls the GitHub notifications of the connected accounts and marks the ones that match the user's rules as done. The rules can be edited in the web interface or in a YAML file. This document describes that file so that an assistant can add, change and remove rules by editing it.
+
+## The rules file
+
+- Location: `rules.yaml` in the data directory (`/data/rules.yaml` in the Docker image, `./data/rules.yaml` otherwise), or the path in the `RULES_FILE` environment variable. The Rules page of the web interface shows the path in use. With PostgreSQL or MySQL there is no file unless `RULES_FILE` is set.
+- Mewte reads the file about 1 to 2 seconds after it stops changing. No restart is needed.
+- The whole file is applied or none of it. If anything in it is invalid, the stored rules stay as they were, and the Rules page and the server log list each problem with its line number.
+- The file is the complete list of rules. Removing an entry deletes that rule. An empty file is rejected; to delete every rule write `rules: []`.
+- Saving a rule in the web interface rewrites the whole file, which drops comments. Edits made in the file keep their comments.
+- Do not edit the live file in place. Edit a copy, validate it, then replace the file: see "How to change the rules" below.
+
+## Structure
+
+```yaml
+rules:
+  - id: 0198c0de-1111-7000-8000-000000000001
+    name: Merged or closed in acme
+    enabled: true
+    priority: 10
+    accounts: all
+    condition:
+      type: group
+      op: and
+      children:
+        - type: leaf
+          field: repo
+          operator: matches
+          value: [acme/*]
+        - type: leaf
+          field: state
+          operator: in
+          value: [closed, merged]
+```
+
+The top level has exactly one key, `rules`, a list. Unknown keys anywhere in a rule are errors.
+
+| Key | Required | Default | Meaning |
+| --- | --- | --- | --- |
+| `id` | no | assigned by Mewte | Identity of the rule. Leave it out for a new rule: Mewte writes one into the file after loading it. Never change or reuse an existing id; keeping it is what makes an edit an update instead of a delete plus a create. |
+| `name` | yes | | Shown in the web interface and recorded in the history. 1 to 200 characters. |
+| `enabled` | no | `true` | `false` keeps the rule but stops it from matching. |
+| `priority` | no | `100` | Integer from 0 to 100000. Lower numbers are checked first. |
+| `accounts` | no | `all` | `all`, or a list of GitHub logins of connected accounts, for example `[octocat]`. A login that is not connected is an error. |
+| `condition` | yes | | A group, see below. |
+| `action` | no | `mark_done` | The only action. Can be left out. |
+
+## How rules are applied
+
+- Only unread notifications are considered.
+- For each notification, the enabled rules that apply to its account are tried from the lowest `priority` to the highest. The first rule whose condition is true marks the notification as done, and no later rule is tried.
+- Marking as done cannot be undone on GitHub. Prefer narrow conditions, and suggest that the user runs the preview in the web interface before relying on a new rule.
+
+## Conditions
+
+A condition is a tree. Every node has a `type`.
+
+A group combines its children:
+
+```yaml
+type: group
+op: and        # and: every child is true. or: at least one child is true.
+negate: true   # optional. Inverts the result of the group.
+children:      # 1 to 50 groups or leaves
+  - ...
+```
+
+- The `condition` of a rule must be a group, even when it holds a single leaf.
+- Groups can be nested up to 6 levels.
+- `op: or` with `negate: true` means "none of the children". `op: and` with `negate: true` means "not all of the children".
+
+A leaf tests one field of the notification:
+
+```yaml
+type: leaf
+field: label
+operator: any
+value: [dependencies]
+```
+
+## Fields
+
+| Field | What it holds | Operators | Value |
+| --- | --- | --- | --- |
+| `repo` | Full repository name, `owner/name` | `matches`, `not_matches` | List of patterns |
+| `owner` | User or organization that owns the repository | `matches`, `not_matches` | List of patterns |
+| `reason` | Why GitHub sent the notification | `in`, `not_in` | List of reasons |
+| `subject_type` | Kind of thing the notification is about | `in`, `not_in` | List of types |
+| `state` | State of the issue, pull request or discussion | `in`, `not_in` | List of states |
+| `title` | Title of the notification | `contains`, `not_contains`, `regex`, `not_regex` | One string |
+| `author` | Login of whoever opened the issue, pull request or discussion | `matches`, `not_matches` | List of patterns |
+| `actor` | Login of whoever wrote the latest comment, or the author when there is no comment | `matches`, `not_matches` | List of patterns |
+| `label` | Labels | `any`, `all`, `none` | List of patterns |
+| `assignee` | Logins of the assignees | `any`, `all`, `none` | List of patterns |
+| `reviewer` | Logins of people asked to review plus people who reviewed | `any`, `all`, `none` | List of patterns |
+| `commenter` | Logins of everyone who commented, review comments included | `any`, `all`, `none` | List of patterns |
+| `author_is_bot` | Whether the author is a bot | `is` | `true` or `false` |
+| `actor_is_bot` | Whether the actor is a bot | `is` | `true` or `false` |
+
+Operators:
+
+- `matches`: the field matches at least one pattern. `not_matches`: it matches none.
+- `in`: the field is one of the values. `not_in`: it is none of them.
+- `any`: at least one member (label, assignee, ...) matches a pattern. `all`: there is at least one member and every member matches a pattern. `none`: no member matches.
+- `contains` / `not_contains`: the title contains the text. `regex` / `not_regex`: the title matches a JavaScript regular expression. Both ignore case unless the leaf also has `caseSensitive: true`.
+- `is`: the field equals the boolean.
+
+Patterns ignore case. `*` matches any run of characters and is the only wildcard: `acme/*` is every repository of `acme`, `*[bot]` is every login ending in `[bot]`. A pattern without `*` must equal the whole value. Lists hold 1 to 100 non-empty strings.
+
+Values:
+
+- Reasons: `agent_session_finished`, `approval_requested`, `assign`, `author`, `ci_activity`, `comment`, `invitation`, `manual`, `member_feature_requested`, `mention`, `review_requested`, `security_advisory_credit`, `security_alert`, `state_change`, `subscribed`, `team_mention`. GitHub may add others; any string is accepted.
+- Types: `Issue`, `PullRequest`, `Discussion`, `Commit`, `Release`, `CheckSuite`, `WorkflowRun`, `RepositoryInvitation`, `RepositoryVulnerabilityAlert`, `RepositoryDependabotAlertsThread`, `RepositoryAdvisory`. Any string is accepted.
+- States: `open`, `closed`, `merged`, `draft`, `answered`. Only these 5. `merged` and `draft` occur on pull requests only, `answered` on discussions only. A merged pull request is `merged`, not `closed`.
+
+## Missing data never matches
+
+`repo`, `owner`, `reason`, `subject_type` and `title` are known for every notification. The other fields need details that exist only for issues, pull requests and discussions (`reviewer` for pull requests only, `assignee` not for discussions), and for private repositories only when the account's token has the `repo` scope.
+
+When a leaf needs data that is not available, it is neither true nor false but unknown. An unknown result stays unknown under `negate`, and a rule matches only when its condition is true. So `state not_in [open]` does not match a release, and a rule never clears a notification because data was missing. To match such notifications on purpose, test `subject_type` instead.
+
+## Examples
+
+Merged or closed pull requests, except the ones labelled as important:
+
+```yaml
+rules:
+  - name: Finished pull requests
+    priority: 10
+    condition:
+      type: group
+      op: and
+      children:
+        - type: leaf
+          field: subject_type
+          operator: in
+          value: [PullRequest]
+        - type: leaf
+          field: state
+          operator: in
+          value: [closed, merged]
+        - type: leaf
+          field: label
+          operator: none
+          value: [security, "breaking change"]
+```
+
+Dependency bots in two organizations, for one account only:
+
+```yaml
+  - name: Dependency bots
+    priority: 20
+    accounts: [octocat]
+    condition:
+      type: group
+      op: and
+      children:
+        - type: leaf
+          field: owner
+          operator: matches
+          value: [acme, octo-org]
+        - type: group
+          op: or
+          children:
+            - type: leaf
+              field: author
+              operator: matches
+              value: ["dependabot[bot]", "renovate[bot]"]
+            - type: leaf
+              field: title
+              operator: regex
+              value: "^chore\\(deps\\)"
+```
+
+## How to change the rules
+
+Work on a copy and replace the live file only after the copy has passed validation. The live file is applied as soon as it is saved, and marking a notification as done cannot be undone, so a half-edited or wrong file must never be the one Mewte reads.
+
+1. Copy the live file to `rules.new.yaml` in the same directory. Mewte reads only the configured file, so the copy has no effect.
+2. Edit the copy:
+   - Keep every existing `id` exactly as it is. Add new rules without an `id`.
+   - Keep the rules you were not asked to change: the file is the complete list.
+   - Make the `condition` of each rule a group, and give every node its `type`.
+   - Use only the operators listed for the field, and the value shape listed for it.
+   - Quote strings that YAML would read as something else: values containing `[`, `]`, `#`, `:` or starting with `*`, and regular expressions. Write `value: ["*[bot]"]`, not `value: [*[bot]]`.
+3. Validate the copy with `validate-rules` (commands below). It checks the syntax, every key, field, operator and value, and that each account is connected. It reads the database and changes nothing.
+4. If it reports problems, each has a line number. Fix them in the copy and validate again. Do not continue until the command exits with 0.
+5. Read the summary it prints, for example:
+
+   ```text
+   rules.new.yaml is valid: 3 rules.
+   Replacing the live rules file with it would:
+     add     Releases
+     change  Finished pull requests
+     remove  Dependency bots
+     keep    1 rule unchanged
+   ```
+
+   Make sure it is exactly what was asked for. A `remove` line you did not intend means a rule or its `id` got lost in the copy.
+6. Replace the live file with the copy in one step: `mv rules.new.yaml rules.yaml`.
+7. Confirm it was applied: within a few seconds the server log says `Applied N rule change(s)`, and the Rules page (or `GET /api/rules/source`, signed in) shows no problems.
+
+Where to run it:
+
+```bash
+# Docker Compose, rules file in a mounted directory (RULES_FILE=/config/rules.yaml, ./config:/config):
+cp config/rules.yaml config/rules.new.yaml
+# ... edit config/rules.new.yaml ...
+docker compose exec mewte mewte validate-rules /config/rules.new.yaml
+mv config/rules.new.yaml config/rules.yaml
+
+# Docker Compose, default setup (the file lives in the mewte-data volume):
+docker compose cp mewte:/data/rules.yaml rules.new.yaml
+# ... edit rules.new.yaml ...
+docker compose cp rules.new.yaml mewte:/data/rules.new.yaml
+docker compose exec mewte mewte validate-rules /data/rules.new.yaml
+docker compose exec mewte mv /data/rules.new.yaml /data/rules.yaml
+
+# Without Docker, from the directory Mewte is started in, with the same environment:
+cp data/rules.yaml data/rules.new.yaml
+# ... edit data/rules.new.yaml ...
+bun apps/server/dist/index.mjs validate-rules data/rules.new.yaml
+mv data/rules.new.yaml data/rules.yaml
+```
+
+Exit codes of `validate-rules`: 0 the file is valid, 1 it has problems, 2 it could not be checked (file or database not readable).
+
+If the command cannot be run, Mewte still protects itself: an invalid live file is rejected as a whole and the stored rules stay in effect. That is a safety net, not a substitute for validating first, because a file can be valid and still not be what was intended.
+
+## API
+
+- [OpenAPI document](/api/openapi.json): every endpoint of the HTTP API, including `GET /api/rules/source` for the state of the rules file.
+- [Interactive API documentation](/api/docs)

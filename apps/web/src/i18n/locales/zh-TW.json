@@ -214,7 +214,11 @@
     "previewRunning": "正在檢查通知…",
     "previewAccount": "{{login}}：{{fetched}} 則中有 {{matched}} 則符合",
     "previewNoMatch": "沒有符合的未讀通知。",
-    "previewError": "無法檢查此帳號：{{message}}"
+    "previewError": "無法檢查此帳號：{{message}}",
+    "fileSynced": "規則與 {{path}} 保持同步。修改該檔案會更新規則，在此處儲存規則則會重寫該檔案。",
+    "fileInvalid": "規則檔案有錯誤",
+    "fileInvalidHint": "{{path}} 中的修改尚未套用。下方顯示的是上一次有效的規則。",
+    "fileProblemLine": "第 {{line}} 行：{{message}}"
   },
   "conditions": {
     "modes": {

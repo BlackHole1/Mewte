@@ -21,6 +21,7 @@ Mewte revisa periódicamente las notificaciones de tus cuentas de GitHub, marca 
 
 - Varias cuentas de GitHub, cada una con su propio intervalo de consulta.
 - Reglas creadas en el navegador, con condiciones anidadas sobre repositorio, motivo, tipo, estado, título, etiquetas, autor y más.
+- Las reglas también son un archivo YAML, así que tú o un asistente de IA podéis cambiarlas sin el navegador.
 - Issues, pull requests y discussions.
 - Vista previa de lo que limpiaría una regla antes de confiar en ella.
 - Un historial de todo lo limpiado, con un enlace a cada hilo.
@@ -58,6 +59,16 @@ Los tokens se guardan cifrados y no se vuelven a mostrar. Con el inicio de sesi�
 - Una condición que necesita datos que GitHub no proporciona nunca coincide, así que nada se limpia por error.
 - GitHub no puede restaurar una notificación marcada como hecha. El historial conserva un enlace a cada una.
 
+### Archivo de reglas
+
+Las reglas se sincronizan con `rules.yaml` en el directorio de datos. Mewte carga el archivo cuando cambia y lo reescribe cuando guardas una regla en el navegador. Edita una copia y compruébala antes de reemplazar el archivo:
+
+```bash
+docker compose exec mewte mewte validate-rules /data/rules.new.yaml
+```
+
+El formato se describe en `/llms.txt` de tu instancia, redactado para que un asistente de IA pueda hacer el cambio.
+
 ## Configuración
 
 Los ajustes son variables de entorno. Con Docker Compose, ponlos en un archivo `.env` junto a `compose.yaml`. [.env.example](../../../.env.example) los enumera todos.
@@ -69,6 +80,7 @@ Los ajustes son variables de entorno. Con Docker Compose, ponlos en un archivo `
 | `SETUP_TOKEN` | ninguno | Si se define, la página de configuración inicial pide este valor antes de crear la cuenta de propietario. |
 | `TRUST_PROXY` | `false` | Defínela como `true` detrás de un proxy inverso. |
 | `GITHUB_API_URL` | `https://api.github.com` | Para GitHub Enterprise Server, usa `https://<host>/api/v3`. |
+| `RULES_FILE` | `rules.yaml` en el volumen de datos con SQLite, ninguno en otro caso | Ruta del archivo de reglas. `off` lo desactiva. |
 | `MEWTE_PORT` | `3000` | Puerto del host que usa Docker Compose. |
 
 Si pierdes `SECRET_KEY`, los tokens guardados quedan ilegibles.

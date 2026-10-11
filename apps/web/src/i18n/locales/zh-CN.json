@@ -214,7 +214,11 @@
     "previewRunning": "正在检查通知…",
     "previewAccount": "{{login}}：{{fetched}} 条中有 {{matched}} 条匹配",
     "previewNoMatch": "没有匹配的未读通知。",
-    "previewError": "无法检查此账号：{{message}}"
+    "previewError": "无法检查此账号：{{message}}",
+    "fileSynced": "规则与 {{path}} 保持同步。修改该文件会更新规则，在此处保存规则则会重写该文件。",
+    "fileInvalid": "规则文件有错误",
+    "fileInvalidHint": "{{path}} 中的修改未生效。下方显示的是上一次有效的规则。",
+    "fileProblemLine": "第 {{line}} 行：{{message}}"
   },
   "conditions": {
     "modes": {
