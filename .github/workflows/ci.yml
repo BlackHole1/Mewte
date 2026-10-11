@@ -20,11 +20,12 @@ jobs:
     name: Lint, typecheck, build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: ${{ env.BUN_VERSION }}
       - run: bun install --frozen-lockfile
+      - run: .github/scripts/release-version.test.sh
       - run: bun run lint
       - run: bun run fmt:check
       - run: bun run typecheck
@@ -63,7 +64,7 @@ jobs:
       TEST_POSTGRES_URL: postgres://mewte:mewte@127.0.0.1:5432/mewte
       TEST_MYSQL_URL: mysql://root:mewte@127.0.0.1:3306/mewte
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: ${{ env.BUN_VERSION }}
@@ -74,9 +75,9 @@ jobs:
     name: Docker image
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: docker/setup-buildx-action@v3
-      - uses: docker/build-push-action@v6
+      - uses: actions/checkout@v7
+      - uses: docker/setup-buildx-action@v4
+      - uses: docker/build-push-action@v7
         with:
           context: .
           push: false
@@ -85,11 +86,4 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
       - name: Smoke test
-        run: |
-          docker run -d --name mewte -p 3000:3000 mewte:ci
-          for attempt in $(seq 1 30); do
-            if curl -fsS http://127.0.0.1:3000/api/health; then exit 0; fi
-            sleep 1
-          done
-          docker logs mewte
-          exit 1
+        run: .github/scripts/smoke-image.sh mewte:ci

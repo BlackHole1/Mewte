@@ -86,3 +86,13 @@ bun run test:all
 언어를 추가하려면 `packages/shared/src/constants.ts`의 `LOCALES`에 언어 코드를 추가하고, `apps/web/src/i18n/index.ts`에 로캘 파일과 언어 이름을 추가한 다음, 문서를 같은 파일 이름으로 `docs/i18n/<locale>/`에 번역합니다. 각 문서는 언어 표시줄로 시작하므로, 모든 문서의 언어 표시줄에 새 언어를 추가하세요.
 
 리포지토리 루트의 영어 문서가 기준 원본입니다. 영어 문서를 변경할 때는 번역본도 함께 업데이트하거나, 아직 업데이트가 필요한 번역본을 pull request에 적어 주세요.
+
+## 릴리스
+
+릴리스는 **Release** 워크플로로 만듭니다. Actions 탭에서 `main` 브랜치를 대상으로 직접 실행합니다. 릴리스를 위한 커밋은 만들어지지 않습니다.
+
+1. **version**을 비워 두면 선택한 **bump**(patch, minor, major)에 따라 최신 `vX.Y.Z` 태그를 올립니다. 정확한 `X.Y.Z`를 입력할 수도 있습니다. 첫 릴리스는 루트 `package.json`의 버전을 사용합니다.
+2. 워크플로는 이미지를 빌드하고 정상적으로 시작되는지 확인한 다음, `X.Y.Z`, `X.Y`, `latest`로 `ghcr.io/blackhole1/mewte`에 푸시합니다. 대상은 linux/amd64와 linux/arm64입니다.
+3. 이어서 해당 커밋에 `vX.Y.Z` 태그를 붙이고, 자동 생성된 노트와 함께 GitHub Release를 게시합니다.
+
+이미지를 푸시한 뒤에 실행이 실패하면 **Re-run failed jobs**를 선택하세요. 태그와 릴리스는 없을 때에만 만들어집니다.

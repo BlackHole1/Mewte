@@ -86,3 +86,13 @@ Interface languages live in `apps/web/src/i18n/locales/<locale>.json`. To improv
 To add a language, add its code to `LOCALES` in `packages/shared/src/constants.ts`, add the locale file and the language name in `apps/web/src/i18n/index.ts`, and translate the documents into `docs/i18n/<locale>/` using the same file names. Each document starts with the language bar; add the new language to that bar in every document.
 
 The English documents in the repository root are the source of truth. When you change one, update the translations or mention in the pull request which ones still need an update.
+
+## Releasing
+
+Releases are made by the **Release** workflow, run by hand from the Actions tab on `main`. Nothing is committed for a release.
+
+1. Leave **version** empty to increase the latest `vX.Y.Z` tag by the chosen **bump** (patch, minor or major), or enter an exact `X.Y.Z`. The first release uses the version in the root `package.json`.
+2. The workflow builds the image, checks that it starts, and pushes it to `ghcr.io/blackhole1/mewte` as `X.Y.Z`, `X.Y` and `latest` for linux/amd64 and linux/arm64.
+3. It then tags the commit as `vX.Y.Z` and publishes a GitHub Release with generated notes.
+
+If a run fails after the image was pushed, choose **Re-run failed jobs**: the tag and the release are created only when they are missing.

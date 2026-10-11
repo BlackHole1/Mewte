@@ -86,3 +86,13 @@ bun run test:all
 若要新增語言，請將語言代碼加入 `packages/shared/src/constants.ts` 的 `LOCALES`，在 `apps/web/src/i18n/index.ts` 中加入語系檔與語言名稱，並以相同的檔名將文件翻譯到 `docs/i18n/<locale>/`。每份文件都以語言列開頭；請在每份文件的語言列中加入新語言。
 
 一切以儲存庫根目錄的英文文件為準。修改其中任何一份時，請一併更新翻譯，或在 pull request 中註明哪些翻譯仍待更新。
+
+## 發布
+
+發布由 **Release** 工作流程完成，需要在 Actions 頁面針對 `main` 分支手動執行。發布不會產生任何提交。
+
+1. **version** 留空時，會依所選的 **bump** (patch、minor 或 major) 在最新的 `vX.Y.Z` 標籤基礎上遞增；也可以直接填入確切的 `X.Y.Z`。首次發布使用根目錄 `package.json` 中的版本號。
+2. 工作流程會建置映像檔，確認它可以啟動，然後以 `X.Y.Z`、`X.Y` 和 `latest` 推送到 `ghcr.io/blackhole1/mewte`，支援 linux/amd64 與 linux/arm64。
+3. 接著為該提交加上 `vX.Y.Z` 標籤，並發布附有自動產生說明的 GitHub Release。
+
+如果在映像檔推送之後執行失敗，請選擇 **Re-run failed jobs**：標籤與 Release 只會在缺少時建立。

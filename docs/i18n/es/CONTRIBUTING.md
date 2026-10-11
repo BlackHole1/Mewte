@@ -86,3 +86,13 @@ Los idiomas de la interfaz están en `apps/web/src/i18n/locales/<locale>.json`. 
 Para agregar un idioma, agrega su código a `LOCALES` en `packages/shared/src/constants.ts`, agrega el archivo de idioma y el nombre del idioma en `apps/web/src/i18n/index.ts`, y traduce los documentos a `docs/i18n/<locale>/` con los mismos nombres de archivo. Cada documento empieza con la barra de idiomas; agrega el nuevo idioma a esa barra en todos los documentos.
 
 Los documentos en inglés de la raíz del repositorio son la fuente de referencia. Cuando modifiques uno, actualiza las traducciones o indica en el pull request cuáles quedan pendientes de actualizar.
+
+## Publicar una versión
+
+Las versiones se publican con el workflow **Release**, que se ejecuta a mano desde la pestaña Actions sobre la rama `main`. No se crea ningún commit para una versión.
+
+1. Deja **version** vacío para aumentar la última etiqueta `vX.Y.Z` según el **bump** elegido (patch, minor o major), o escribe un `X.Y.Z` exacto. La primera versión usa la versión del `package.json` de la raíz.
+2. El workflow construye la imagen, comprueba que arranca y la sube a `ghcr.io/blackhole1/mewte` como `X.Y.Z`, `X.Y` y `latest`, para linux/amd64 y linux/arm64.
+3. Después etiqueta el commit como `vX.Y.Z` y publica una GitHub Release con notas generadas automáticamente.
+
+Si una ejecución falla después de subir la imagen, elige **Re-run failed jobs**: la etiqueta y la release solo se crean si faltan.
