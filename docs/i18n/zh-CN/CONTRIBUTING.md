@@ -86,3 +86,13 @@ bun run test:all
 如需新增语言，请把语言代码添加到 `packages/shared/src/constants.ts` 的 `LOCALES` 中，添加对应的语言文件，并在 `apps/web/src/i18n/index.ts` 中添加语言名称，然后将各文档翻译到 `docs/i18n/<locale>/` 下，文件名保持不变。每份文档都以语言栏开头，请在所有文档的语言栏中加入新语言。
 
 仓库根目录下的英文文档是权威版本。修改其中某份文档时，请同步更新各语言的翻译，或在 Pull request 中说明哪些翻译仍待更新。
+
+## 发布
+
+发布由 **Release** 工作流完成，需要在 Actions 页面针对 `main` 分支手动运行。发布不会产生任何提交。
+
+1. **version** 留空时，会按所选的 **bump** (patch、minor 或 major) 在最新的 `vX.Y.Z` 标签基础上递增；也可以直接填写确切的 `X.Y.Z`。首次发布使用根目录 `package.json` 中的版本号。
+2. 工作流会构建镜像，确认它可以启动，然后以 `X.Y.Z`、`X.Y` 和 `latest` 推送到 `ghcr.io/blackhole1/mewte`，支持 linux/amd64 和 linux/arm64。
+3. 随后为该提交打上 `vX.Y.Z` 标签，并发布带有自动生成说明的 GitHub Release。
+
+如果在镜像推送之后运行失败，请选择 **Re-run failed jobs**：标签和 Release 只会在缺失时创建。
