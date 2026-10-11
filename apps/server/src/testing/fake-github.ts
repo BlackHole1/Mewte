@@ -10,6 +10,9 @@ export interface FakeNotificationInput {
   subjectPath?: string | null;
   latestCommentPath?: string | null;
   updatedAt?: string;
+  /** False for a notification that was already read. */
+  unread?: boolean;
+  private?: boolean;
 }
 
 interface Call {
@@ -65,7 +68,7 @@ export class FakeGitHub {
     const notification: GitHubNotification = {
       id: input.id,
       reason: input.reason ?? "subscribed",
-      unread: true,
+      unread: input.unread ?? true,
       updated_at: input.updatedAt ?? "2026-10-05T10:00:00Z",
       subject: {
         title: input.title ?? `Notification ${input.id}`,
@@ -76,6 +79,7 @@ export class FakeGitHub {
       repository: {
         full_name: repo,
         html_url: `https://github.test/${repo}`,
+        private: input.private ?? false,
         owner: { login: repo.split("/")[0]! },
       },
     };
@@ -136,11 +140,13 @@ export class FakeGitHub {
       }
       const page = Number(url.searchParams.get("page") ?? "1");
       const start = (page - 1) * this.pageSize;
-      const items = this.notifications.filter((n) => !this.done.includes(n.id));
+      // Like GitHub: `all` adds the read notifications, the ones marked as done among them.
+      const all = url.searchParams.get("all") === "true";
+      const items = this.notifications.filter((n) => all || n.unread);
       const link =
         start + this.pageSize < items.length
           ? {
-              link: `<${this.apiUrl}/notifications?per_page=${this.pageSize}&page=${page + 1}>; rel="next"`,
+              link: `<${this.apiUrl}/notifications?${all ? "all=true&" : ""}per_page=${this.pageSize}&page=${page + 1}>; rel="next"`,
             }
           : undefined;
       return json(items.slice(start, start + this.pageSize), { headers: { ...common, ...link } });
@@ -148,7 +154,12 @@ export class FakeGitHub {
 
     const thread = /^\/notifications\/threads\/(.+)$/.exec(url.pathname);
     if (method === "DELETE" && thread) {
-      this.done.push(decodeURIComponent(thread[1]!));
+      const id = decodeURIComponent(thread[1]!);
+      this.done.push(id);
+      // A done notification stays in the list, as a read one.
+      for (const notification of this.notifications) {
+        if (notification.id === id) notification.unread = false;
+      }
       return new Response(null, { status: 204 });
     }
 

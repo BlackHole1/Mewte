@@ -23,6 +23,15 @@ export function accountRoutes(deps: Deps) {
   const tags = ["GitHub accounts"];
   const security = sessionSecurity;
 
+  async function runNow(id: string, trigger: "manual" | "backlog") {
+    const outcome = await runAccount(deps, id, trigger);
+    if (outcome.kind === "not_found") throw notFound("Account");
+    if (outcome.kind === "busy") {
+      throw new ApiError(409, "account_busy", "This account is already running");
+    }
+    return outcome.run;
+  }
+
   app.openapi(
     createRoute({
       method: "get",
@@ -120,18 +129,26 @@ export function accountRoutes(deps: Deps) {
       security,
       summary: "Run an account now",
       description:
-        "Polls the account immediately, applies the rules, and returns the resulting run log once finished. Responds with 409 while another run of the same account is in progress.",
+        "Lists the account's notifications immediately, marks the ones that match a rule as done, and returns the resulting run log once finished. Unread and read notifications are both checked; the read ones from before the account was connected are left to `/backlog`. Responds with 409 while another run of the same account is in progress.",
       request: { params: idParam },
       responses: { 200: json(RunLogSchema, "The finished run."), ...pick(401, 404, 409) },
     }),
-    async (c) => {
-      const outcome = await runAccount(deps, c.req.valid("param").id, "manual");
-      if (outcome.kind === "not_found") throw notFound("Account");
-      if (outcome.kind === "busy") {
-        throw new ApiError(409, "account_busy", "This account is already running");
-      }
-      return c.json(outcome.run, 200);
-    },
+    async (c) => c.json(await runNow(c.req.valid("param").id, "manual"), 200),
+  );
+
+  app.openapi(
+    createRoute({
+      method: "post",
+      path: "/accounts/{id}/backlog",
+      tags,
+      security,
+      summary: "Clear an account's read backlog",
+      description:
+        "Runs the account like `/run`, and also checks the read notifications from before the account was connected, which a normal run leaves alone. GitHub lists read notifications that are still in the inbox together with those already marked as done and cannot tell them apart, so every one that matches a rule is marked as done (again) and recorded in the history. Responds with 409 while another run of the same account is in progress.",
+      request: { params: idParam },
+      responses: { 200: json(RunLogSchema, "The finished run."), ...pick(401, 404, 409) },
+    }),
+    async (c) => c.json(await runNow(c.req.valid("param").id, "backlog"), 200),
   );
 
   return app;

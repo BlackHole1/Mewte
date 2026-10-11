@@ -3,12 +3,15 @@ import {
   DEFAULT_INTERVAL_SEC,
   MAX_INTERVAL_SEC,
   MIN_INTERVAL_SEC,
+  type Rule,
 } from "@mewte/shared";
 import { useMutation } from "@tanstack/react-query";
 import {
   EllipsisIcon,
   ExternalLinkIcon,
   CircleUserRoundIcon,
+  InboxIcon,
+  InfoIcon,
   PencilIcon,
   PlayIcon,
   PlusIcon,
@@ -17,6 +20,7 @@ import {
 } from "lucide-react";
 import { type FormEvent, useId, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Link } from "react-router";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { Page, QueryState } from "@/components/page";
 import { AccountStatusBadge } from "@/components/run-status";
@@ -59,7 +63,7 @@ import { toastManager } from "@/components/ui/toast";
 import { api } from "@/lib/api";
 import { useErrorMessage, useErrorToast } from "@/lib/errors";
 import { useFormat } from "@/lib/format";
-import { keys, queryClient, useAccounts } from "@/lib/queries";
+import { keys, queryClient, useAccounts, useRules } from "@/lib/queries";
 
 const TOKEN_PAGE = "https://github.com/settings/tokens/new?scopes=notifications&description=Mewte";
 const MIN_MINUTES = MIN_INTERVAL_SEC / 60;
@@ -263,12 +267,24 @@ function EditAccountDialog({ account, onClose }: { account: Account; onClose: ()
   );
 }
 
+/** Whether an enabled rule applies to the account. Without one a run can only count. */
+function hasRule(rules: Rule[], accountId: string): boolean {
+  return rules.some(
+    (rule) =>
+      rule.enabled &&
+      (rule.accountScope.type === "all" || rule.accountScope.accountIds.includes(accountId)),
+  );
+}
+
 function AccountCard({
   account,
+  rules,
   onEdit,
   onDelete,
 }: {
   account: Account;
+  /** Undefined until the rules have loaded. */
+  rules: Rule[] | undefined;
   onEdit: () => void;
   onDelete: () => void;
 }) {
@@ -276,6 +292,8 @@ function AccountCard({
   const format = useFormat();
   const onError = useErrorToast();
   const switchId = useId();
+  const [confirmingBacklog, setConfirmingBacklog] = useState(false);
+  const noRules = rules !== undefined && !hasRule(rules, account.id);
 
   const toggle = useMutation({
     mutationFn: (enabled: boolean) => api.updateAccount(account.id, { enabled }),
@@ -284,9 +302,11 @@ function AccountCard({
   });
 
   const run = useMutation({
-    mutationFn: () => api.runAccount(account.id),
+    mutationFn: (trigger: "manual" | "backlog") =>
+      trigger === "backlog" ? api.runBacklog(account.id) : api.runAccount(account.id),
     onError,
     onSettled: () => {
+      setConfirmingBacklog(false);
       refreshAccounts();
       void queryClient.invalidateQueries({ queryKey: keys.runs });
       void queryClient.invalidateQueries({ queryKey: keys.history });
@@ -299,11 +319,13 @@ function AccountCard({
         description:
           result.status === "error"
             ? result.errors[0]
-            : t("accounts.runSummary", {
-                fetched: result.fetched,
-                matched: result.matched,
-                processed: result.processed,
-              }),
+            : noRules
+              ? t("accounts.runNoRules", { fetched: result.fetched })
+              : t("accounts.runSummary", {
+                  fetched: result.fetched,
+                  matched: result.matched,
+                  processed: result.processed,
+                }),
       });
     },
   });
@@ -341,7 +363,7 @@ function AccountCard({
             </div>
             <Button
               loading={busy}
-              onClick={() => run.mutate()}
+              onClick={() => run.mutate("manual")}
               size="sm"
               type="button"
               variant="outline"
@@ -362,6 +384,10 @@ function AccountCard({
                   <PencilIcon aria-hidden="true" />
                   {t("common.edit")}
                 </MenuItem>
+                <MenuItem disabled={busy || noRules} onClick={() => setConfirmingBacklog(true)}>
+                  <InboxIcon aria-hidden="true" />
+                  {t("accounts.backlog")}
+                </MenuItem>
                 <MenuSeparator />
                 <MenuItem onClick={onDelete} variant="destructive">
                   <Trash2Icon aria-hidden="true" />
@@ -381,6 +407,19 @@ function AccountCard({
           <Alert variant="warning">
             <TriangleAlertIcon aria-hidden="true" />
             <AlertDescription className="break-words">{account.lastError}</AlertDescription>
+          </Alert>
+        ) : null}
+        {noRules ? (
+          <Alert variant="info">
+            <InfoIcon aria-hidden="true" />
+            <AlertDescription>
+              <span>
+                {t("accounts.noRules")}{" "}
+                <Link className="font-medium text-foreground underline" to="/rules/new">
+                  {t("dashboard.createRule")}
+                </Link>
+              </span>
+            </AlertDescription>
           </Alert>
         ) : null}
       </CardPanel>
@@ -425,6 +464,16 @@ function AccountCard({
           {t("accounts.noRepoScope")}
         </p>
       )}
+
+      <ConfirmDialog
+        confirmLabel={t("accounts.backlogConfirm")}
+        description={t("accounts.backlogDescription")}
+        onConfirm={() => run.mutate("backlog")}
+        onOpenChange={(open) => !open && !run.isPending && setConfirmingBacklog(false)}
+        open={confirmingBacklog}
+        pending={run.isPending}
+        title={t("accounts.backlogTitle", { login: account.login })}
+      />
     </Card>
   );
 }
@@ -433,6 +482,7 @@ export function AccountsPage() {
   const { t } = useTranslation();
   const onError = useErrorToast();
   const accounts = useAccounts({ poll: true });
+  const rules = useRules();
   const [adding, setAdding] = useState(false);
   const [editing, setEditing] = useState<Account | null>(null);
   const [deleting, setDeleting] = useState<Account | null>(null);
@@ -475,6 +525,7 @@ export function AccountsPage() {
                 <AccountCard
                   account={account}
                   key={account.id}
+                  rules={rules.data}
                   onDelete={() => setDeleting(account)}
                   onEdit={() => setEditing(account)}
                 />

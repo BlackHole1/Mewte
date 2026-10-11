@@ -77,7 +77,7 @@ export function ruleRoutes(deps: Deps) {
       security,
       summary: "Preview a condition",
       description:
-        "Fetches the current unread notifications of every account in scope and reports which ones the condition would match. Nothing is marked as done and nothing is written to history.",
+        "Fetches the notifications a run would check for every account in scope and reports which ones the condition would match, and which ones it could not decide because GitHub did not return the details. Nothing is marked as done and nothing is written to history.",
       request: { body: jsonBody(DryRunInputSchema) },
       responses: {
         200: json(dryRunResultSchema.openapi("DryRunResult"), "Matches per account."),

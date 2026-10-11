@@ -53,6 +53,7 @@ const account = (id: string, githubId: number, now: number): repo.NewAccount => 
   status: "ok",
   lastError: null,
   lastModified: null,
+  baselineAt: now,
   pollIntervalSec: null,
   nextRunAt: now,
   lastRunAt: null,

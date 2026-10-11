@@ -36,6 +36,7 @@ export interface GitHubUser {
 export interface GitHubNotification {
   id: string;
   reason: string;
+  /** False for a notification that was read, and for one that was marked as done. */
   unread: boolean;
   updated_at: string;
   subject: {
@@ -47,6 +48,7 @@ export interface GitHubNotification {
   repository: {
     full_name: string;
     html_url: string;
+    private?: boolean;
     owner: { login: string };
   };
 }
@@ -69,6 +71,10 @@ export interface GitHubClientOptions {
 
 export interface GitHubClient {
   getAuthenticatedUser(): Promise<GitHubUser>;
+  /**
+   * Lists unread and read notifications. GitHub also returns the ones marked as done, as read,
+   * and offers no way to tell them from the read ones still in the inbox.
+   */
   listNotifications(options?: { ifModifiedSince?: string | undefined }): Promise<NotificationList>;
   markThreadDone(threadId: string): Promise<void>;
   /** GETs a URL the API handed back. Refuses anything outside the configured API origin. */
@@ -203,7 +209,7 @@ export function createGitHubClient(options: GitHubClientOptions): GitHubClient {
       const headers: Record<string, string> = {};
       if (ifModifiedSince) headers["If-Modified-Since"] = ifModifiedSince;
 
-      const first = await request("/notifications?per_page=50", { headers });
+      const first = await request("/notifications?all=true&per_page=50", { headers });
       const pollIntervalSec = parseInteger(first.headers.get("x-poll-interval"));
       if (first.status === 304) return { notModified: true, pollIntervalSec };
 

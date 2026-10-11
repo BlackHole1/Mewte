@@ -48,7 +48,8 @@ The top level has exactly one key, `rules`, a list. Unknown keys anywhere in a r
 
 ## How rules are applied
 
-- Only unread notifications are considered.
+- Read and unread notifications are treated alike. A notification that Mewte marked as done is handled again only after GitHub updates it.
+- Notifications that were already read when Mewte started watching an account are left alone, unless the user runs "Clear read backlog" for that account in the web interface.
 - For each notification, the enabled rules that apply to its account are tried from the lowest `priority` to the highest. The first rule whose condition is true marks the notification as done, and no later rule is tried.
 - Marking as done cannot be undone on GitHub. Prefer narrow conditions, and suggest that the user runs the preview in the web interface before relying on a new rule.
 

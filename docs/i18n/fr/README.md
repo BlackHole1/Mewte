@@ -79,7 +79,8 @@ Les jetons sont stockés chiffrés et ne sont plus jamais affichés. Avec l'auth
 
 ## Règles
 
-- Les règles sont examinées par ordre de priorité et la première qui correspond l'emporte. Seules les notifications non lues sont prises en compte.
+- Les règles sont examinées par ordre de priorité et la première qui correspond l'emporte. Les notifications lues et non lues sont traitées de la même façon.
+- Les notifications déjà lues lorsque Mewte a commencé à surveiller un compte sont laissées telles quelles. Pour les traiter, utilisez « Traiter les notifications déjà lues » dans le menu du compte.
 - Un groupe correspond quand toutes ses conditions, l'une d'elles, aucune ou pas toutes correspondent. Les groupes peuvent être imbriqués.
 - `*` est un caractère générique : `acme/*` correspond à tous les dépôts de `acme`.
 - Une condition qui dépend de données que GitHub ne fournit pas ne correspond jamais : rien n'est traité par erreur.

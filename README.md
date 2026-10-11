@@ -79,7 +79,8 @@ Tokens are stored encrypted and never shown again. With SAML single sign-on, als
 
 ## Rules
 
-- Rules are checked in priority order and the first match wins. Only unread notifications are considered.
+- Rules are checked in priority order and the first match wins. Read and unread notifications are treated alike.
+- Notifications that were already read when Mewte started watching an account are left alone. To handle them, use "Clear read backlog" in the account's menu.
 - A group matches when all, any, none or not all of its conditions match. Groups can be nested.
 - `*` is a wildcard: `acme/*` matches every repository of `acme`.
 - A condition that needs data GitHub does not provide never matches, so nothing is cleared by mistake.

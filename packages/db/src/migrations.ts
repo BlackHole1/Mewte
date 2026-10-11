@@ -172,8 +172,43 @@ const init: Migration = {
   },
 };
 
+const readNotifications: Migration = {
+  async up(db: Kysely<unknown>) {
+    await db.schema
+      .createTable("clearedThreads")
+      .addColumn("accountId", id, (c) => c.notNull())
+      .addColumn("threadId", "varchar(32)", (c) => c.notNull())
+      .addColumn("updatedAt", "bigint", (c) => c.notNull())
+      .addColumn("clearedAt", "bigint", (c) => c.notNull())
+      .addPrimaryKeyConstraint("cleared_threads_pk", ["accountId", "threadId"])
+      .execute();
+    await db.schema
+      .createIndex("cleared_threads_cleared_at")
+      .on("clearedThreads")
+      .column("clearedAt")
+      .execute();
+
+    await db.schema
+      .alterTable("githubAccounts")
+      .addColumn("baselineAt", "bigint", (c) => c.notNull().defaultTo(0))
+      .execute();
+    // Accounts connected before this release keep their read backlog: GitHub cannot tell which
+    // of those notifications the user already marked as done.
+    await (db as Kysely<{ githubAccounts: { baselineAt: number } }>)
+      .updateTable("githubAccounts")
+      .set({ baselineAt: Date.now() })
+      .execute();
+  },
+
+  async down(db: Kysely<unknown>) {
+    await db.schema.alterTable("githubAccounts").dropColumn("baselineAt").execute();
+    await db.schema.dropTable("clearedThreads").ifExists().execute();
+  },
+};
+
 export const migrations: Record<string, Migration> = {
   "0001_init": init,
+  "0002_read_notifications": readNotifications,
 };
 
 const provider: MigrationProvider = {

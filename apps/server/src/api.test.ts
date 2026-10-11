@@ -156,6 +156,11 @@ describe.each(testDialects())("API on %s", (kind) => {
     expect(h.github.done).toEqual(["1"]);
     expect((await h.request("POST", "/api/accounts/missing/run")).status).toBe(404);
 
+    const backlog = await h.request("POST", `/api/accounts/${account.id}/backlog`);
+    expect(backlog.status).toBe(200);
+    expect(await body<RunLog>(backlog)).toMatchObject({ trigger: "backlog", status: "success" });
+    expect((await h.request("POST", "/api/accounts/missing/backlog")).status).toBe(404);
+
     // History and run logs
     const history = await body<Paginated<HistoryItem>>(
       await h.request("GET", "/api/history?q=LODASH&pageSize=5"),
@@ -179,7 +184,7 @@ describe.each(testDialects())("API on %s", (kind) => {
     ).toBe(1);
     expect((await h.request("GET", "/api/history?pageSize=1000")).status).toBe(400);
     const runs = await body<Paginated<RunLog>>(await h.request("GET", "/api/runs?status=success"));
-    expect(runs.total).toBe(1);
+    expect(runs.items.map((run) => run.trigger).toSorted()).toEqual(["backlog", "manual"]);
     expect((await h.request("GET", "/api/runs?status=bogus")).status).toBe(400);
 
     // Dashboard
@@ -192,7 +197,7 @@ describe.each(testDialects())("API on %s", (kind) => {
     expect(dashboard.daily).toHaveLength(14);
     expect(dashboard.daily.at(-1)).toEqual({ date: "2026-10-05", count: 1 });
     expect(dashboard.daily[0]).toEqual({ date: "2026-09-22", count: 0 });
-    expect(dashboard.recentRuns).toHaveLength(1);
+    expect(dashboard.recentRuns).toHaveLength(2);
 
     // Settings
     expect(await body(await h.request("GET", "/api/settings"))).toEqual({ retentionDays: 30 });
@@ -713,6 +718,7 @@ describe("OpenAPI document", () => {
         [
           "/api/accounts",
           "/api/accounts/{id}",
+          "/api/accounts/{id}/backlog",
           "/api/accounts/{id}/run",
           "/api/auth/login",
           "/api/auth/logout",

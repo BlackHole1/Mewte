@@ -57,6 +57,8 @@ export interface GithubAccountsTable {
   status: string;
   lastError: string | null;
   lastModified: string | null;
+  /** Read notifications last updated before this were in the inbox before Mewte looked at it. */
+  baselineAt: number;
   pollIntervalSec: number | null;
   nextRunAt: number;
   lastRunAt: number | null;
@@ -112,6 +114,15 @@ export interface SettingsTable {
   value: string;
 }
 
+/** The version of a thread Mewte marked as done. GitHub keeps listing such threads as read. */
+export interface ClearedThreadsTable {
+  accountId: string;
+  threadId: string;
+  /** The thread's `updated_at` when it was cleared, in epoch milliseconds. */
+  updatedAt: number;
+  clearedAt: number;
+}
+
 export interface SubjectCacheTable {
   cacheKey: string;
   payload: string;
@@ -130,6 +141,7 @@ export interface DB {
   runLogs: RunLogsTable;
   settings: SettingsTable;
   subjectCache: SubjectCacheTable;
+  clearedThreads: ClearedThreadsTable;
 }
 
 /** A database handle plus the dialect it talks to. Transactions use the same shape. */

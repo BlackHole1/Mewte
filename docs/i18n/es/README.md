@@ -79,7 +79,8 @@ Los tokens se guardan cifrados y no se vuelven a mostrar. Con el inicio de sesi�
 
 ## Reglas
 
-- Las reglas se comprueban por orden de prioridad y gana la primera que coincide. Solo se tienen en cuenta las notificaciones no leídas.
+- Las reglas se comprueban por orden de prioridad y gana la primera que coincide. Las notificaciones leídas y no leídas se tratan igual.
+- Las notificaciones que ya estaban leídas cuando Mewte empezó a vigilar una cuenta no se tocan. Para tratarlas, usa «Limpiar las ya leídas» en el menú de la cuenta.
 - Un grupo coincide cuando coinciden todas sus condiciones, alguna, ninguna o no todas. Los grupos se pueden anidar.
 - `*` es un comodín: `acme/*` coincide con todos los repositorios de `acme`.
 - Una condición que necesita datos que GitHub no proporciona nunca coincide, así que nada se limpia por error.
