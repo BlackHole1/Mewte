@@ -91,7 +91,7 @@ Les documents en anglais situés à la racine du dépôt font foi. Lorsque vous 
 
 Les versions sont publiées par le workflow **Release**, lancé à la main depuis l'onglet Actions sur la branche `main`. Aucun commit n'est créé pour une version.
 
-1. Laissez **version** vide pour augmenter le dernier tag `vX.Y.Z` selon le **bump** choisi (patch, minor ou major), ou saisissez un `X.Y.Z` exact. La première version utilise la version du `package.json` à la racine.
+1. Laissez **version** vide pour augmenter le dernier tag `vX.Y.Z` selon le **bump** choisi (patch, minor ou major), ou saisissez un `X.Y.Z` exact.
 2. Le workflow construit l'image, vérifie qu'elle démarre, puis la pousse vers `ghcr.io/blackhole1/mewte` sous les tags `X.Y.Z`, `X.Y` et `latest`, pour linux/amd64 et linux/arm64.
 3. Il pose ensuite le tag `vX.Y.Z` sur le commit et publie une GitHub Release avec des notes générées automatiquement.
 

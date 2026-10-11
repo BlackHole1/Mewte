@@ -91,7 +91,7 @@ bun run test:all
 
 發布由 **Release** 工作流程完成，需要在 Actions 頁面針對 `main` 分支手動執行。發布不會產生任何提交。
 
-1. **version** 留空時，會依所選的 **bump** (patch、minor 或 major) 在最新的 `vX.Y.Z` 標籤基礎上遞增；也可以直接填入確切的 `X.Y.Z`。首次發布使用根目錄 `package.json` 中的版本號。
+1. **version** 留空時，會依所選的 **bump** (patch、minor 或 major) 在最新的 `vX.Y.Z` 標籤基礎上遞增；也可以直接填入確切的 `X.Y.Z`。
 2. 工作流程會建置映像檔，確認它可以啟動，然後以 `X.Y.Z`、`X.Y` 和 `latest` 推送到 `ghcr.io/blackhole1/mewte`，支援 linux/amd64 與 linux/arm64。
 3. 接著為該提交加上 `vX.Y.Z` 標籤，並發布附有自動產生說明的 GitHub Release。
 

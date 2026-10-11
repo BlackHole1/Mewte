@@ -30,6 +30,8 @@ concurrency:
 
 env:
   IMAGE: ghcr.io/blackhole1/mewte
+  # Released when no vX.Y.Z tag exists yet. package.json stays at 0.0.0-development.
+  FIRST_VERSION: 0.1.0
 
 jobs:
   version:
@@ -62,11 +64,10 @@ jobs:
           INPUT_VERSION: ${{ inputs.version }}
           INPUT_BUMP: ${{ inputs.bump }}
         run: |
-          first=$(.github/scripts/package-version.sh package.json)
           tags=$(gh api --paginate "repos/$GITHUB_REPOSITORY/git/matching-refs/tags/v" \
             --jq '.[].ref | ltrimstr("refs/tags/")')
           version=$(printf '%s\n' "$tags" |
-            .github/scripts/release-version.sh "$INPUT_VERSION" "$INPUT_BUMP" "$first")
+            .github/scripts/release-version.sh "$INPUT_VERSION" "$INPUT_BUMP" "$FIRST_VERSION")
           echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "::notice::Releasing v$version from ${GITHUB_SHA::12}"
 

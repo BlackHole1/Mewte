@@ -19,7 +19,7 @@ expect() {
 
 tags=$'v0.1.0\nv0.2.0\nv0.10.3\nv0.9.9\nv1.0.0-rc.1\nnightly'
 
-expect 0.1.0 "" "" patch     # no tags: the version in package.json
+expect 0.1.0 "" "" patch     # no tags: the first version
 expect 0.1.0 "" "" major     # no tags: the bump is not applied to the first release
 expect 0.4.0 "" "0.4.0" patch # no tags, explicit
 expect 0.10.4 "$tags" "" patch

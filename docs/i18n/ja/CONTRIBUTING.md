@@ -91,7 +91,7 @@ bun run test:all
 
 リリースは **Release** ワークフローで行います。Actions タブから `main` ブランチに対して手動で実行します。リリースのためのコミットは作成されません。
 
-1. **version** を空にすると、選択した **bump** (patch、minor、major) に従って最新の `vX.Y.Z` タグを上げます。正確な `X.Y.Z` を入力することもできます。最初のリリースでは、ルートの `package.json` にあるバージョンを使います。
+1. **version** を空にすると、選択した **bump** (patch、minor、major) に従って最新の `vX.Y.Z` タグを上げます。正確な `X.Y.Z` を入力することもできます。
 2. ワークフローはイメージをビルドし、起動することを確認したうえで、`X.Y.Z`、`X.Y`、`latest` として `ghcr.io/blackhole1/mewte` にプッシュします。対象は linux/amd64 と linux/arm64 です。
 3. 続いて、そのコミットに `vX.Y.Z` タグを付け、自動生成されたノート付きの GitHub Release を公開します。
 

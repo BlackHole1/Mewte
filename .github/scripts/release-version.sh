@@ -4,7 +4,7 @@
 #   git tag -l 'v*' | release-version.sh <version> <bump> <first>
 #
 # <version> is an explicit X.Y.Z or empty; <bump> is patch, minor or major; <first> is the version
-# of the first release when no vX.Y.Z tag exists yet (the version in package.json). Tags come on stdin,
+# of the first release when no vX.Y.Z tag exists yet. Tags come on stdin,
 # one per line; tags that are not vX.Y.Z are ignored. An explicit version must be new and greater
 # than the latest tag; otherwise the latest tag is bumped.
 set -euo pipefail

@@ -91,7 +91,7 @@ The English documents in the repository root are the source of truth. When you c
 
 Releases are made by the **Release** workflow, run by hand from the Actions tab on `main`. Nothing is committed for a release.
 
-1. Leave **version** empty to increase the latest `vX.Y.Z` tag by the chosen **bump** (patch, minor or major), or enter an exact `X.Y.Z`. The first release uses the version in the root `package.json`.
+1. Leave **version** empty to increase the latest `vX.Y.Z` tag by the chosen **bump** (patch, minor or major), or enter an exact `X.Y.Z`.
 2. The workflow builds the image, checks that it starts, and pushes it to `ghcr.io/blackhole1/mewte` as `X.Y.Z`, `X.Y` and `latest` for linux/amd64 and linux/arm64.
 3. It then tags the commit as `vX.Y.Z` and publishes a GitHub Release with generated notes.
 
