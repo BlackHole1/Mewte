@@ -1,8 +1,10 @@
-import type { Rule } from "@mewte/shared";
+import type { Rule, RulesSource } from "@mewte/shared";
 import { useMutation } from "@tanstack/react-query";
 import {
+  CircleAlertIcon,
   CopyIcon,
   EllipsisIcon,
+  FileCodeIcon,
   ListFilterIcon,
   PencilIcon,
   PlusIcon,
@@ -13,6 +15,7 @@ import { useTranslation } from "react-i18next";
 import { Link, useNavigate } from "react-router";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { Page, QueryState } from "@/components/page";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
@@ -36,7 +39,7 @@ import {
 import { toastManager } from "@/components/ui/toast";
 import { api } from "@/lib/api";
 import { useErrorToast } from "@/lib/errors";
-import { keys, queryClient, useAccounts, useRules } from "@/lib/queries";
+import { keys, queryClient, useAccounts, useRules, useRulesSource } from "@/lib/queries";
 
 export function refreshRules() {
   void queryClient.invalidateQueries({ queryKey: keys.rules });
@@ -60,11 +63,46 @@ function ScopeLabel({ rule }: { rule: Rule }) {
   );
 }
 
+/** Says which file mirrors the rules, and why its current content was not applied if it was not. */
+function RulesFileNotice({ source }: { source: RulesSource }) {
+  const { t } = useTranslation();
+  if (!source.enabled || source.path === null) return null;
+
+  if (source.problems.length > 0) {
+    return (
+      <Alert variant="error">
+        <CircleAlertIcon aria-hidden="true" />
+        <AlertTitle>{t("rules.fileInvalid")}</AlertTitle>
+        <AlertDescription>
+          <p>{t("rules.fileInvalidHint", { path: source.path })}</p>
+          <ul className="mt-2 flex flex-col gap-1 font-mono text-xs">
+            {source.problems.map((problem) => (
+              <li className="break-words" key={`${problem.line}:${problem.message}`}>
+                {problem.line === null
+                  ? problem.message
+                  : t("rules.fileProblemLine", { line: problem.line, message: problem.message })}
+              </li>
+            ))}
+          </ul>
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
+  return (
+    <p className="flex items-start gap-2 text-muted-foreground text-sm">
+      <FileCodeIcon aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
+      <span className="min-w-0 break-words">{t("rules.fileSynced", { path: source.path })}</span>
+    </p>
+  );
+}
+
 export function RulesPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const onError = useErrorToast();
-  const rules = useRules();
+  const source = useRulesSource();
+  const rules = useRules({ poll: source.data?.enabled === true });
   const [deleting, setDeleting] = useState<Rule | null>(null);
 
   const toggle = useMutation({
@@ -93,6 +131,7 @@ export function RulesPage() {
 
   return (
     <Page actions={addButton} description={t("rules.description")} title={t("rules.title")}>
+      {source.data ? <RulesFileNotice source={source.data} /> : null}
       <QueryState query={rules}>
         {(list) =>
           list.length === 0 ? (

@@ -1,10 +1,12 @@
 import { createDb, migrateToLatest } from "@mewte/db";
 import { getConnInfo } from "hono/bun";
 import { createApp } from "./app";
+import { runCli } from "./cli";
 import { loadConfig } from "./config";
 import { type Deps, consoleLogger } from "./deps";
 import { createCipher, newId } from "./services/crypto";
 import { argon2Hasher } from "./services/password";
+import { createRulesFile, resolveRulesFilePath } from "./services/rules-file";
 import { createScheduler } from "./services/scheduler";
 import { resolveSecretKey } from "./services/secret-key";
 import { findWebDist, serveWeb } from "./static";
@@ -46,6 +48,12 @@ async function main() {
       }
     },
     logger,
+    rulesFile: createRulesFile({
+      conn: database,
+      now: Date.now,
+      logger,
+      path: resolveRulesFilePath(config.rulesFile, database.kind, config.dataDir),
+    }),
   };
 
   const app = createApp(deps);
@@ -53,6 +61,8 @@ async function main() {
   if (webDist) serveWeb(app, webDist);
   else logger.warn("Web build not found; serving the API only. Run `bun run build` first.");
 
+  // Before the scheduler, so the first poll already runs with the rules from the file.
+  const stopRulesFile = await deps.rulesFile.start();
   const stopScheduler = createScheduler(deps).start();
   const server = Bun.serve({
     hostname: config.host,
@@ -69,6 +79,7 @@ async function main() {
     closing = true;
     logger.info("Shutting down");
     stopScheduler();
+    stopRulesFile();
     await server.stop();
     await database.destroy();
     process.exit(0);
@@ -77,7 +88,14 @@ async function main() {
   process.on("SIGTERM", () => void shutdown());
 }
 
-main().catch((error) => {
+async function entry() {
+  // `mewte validate-rules <file>` and friends; no arguments starts the server.
+  const exitCode = await runCli(process.argv.slice(2), process.env);
+  if (exitCode !== undefined) process.exit(exitCode);
+  await main();
+}
+
+entry().catch((error) => {
   logger.error("Failed to start", error);
   process.exit(1);
 });

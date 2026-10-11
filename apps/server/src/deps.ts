@@ -3,6 +3,7 @@ import type { Context } from "hono";
 import type { Config } from "./config";
 import type { Cipher } from "./services/crypto";
 import type { PasswordHasher } from "./services/password";
+import type { RulesFile } from "./services/rules-file";
 
 export interface Logger {
   info(message: string): void;
@@ -25,6 +26,8 @@ export interface Deps {
   /** Address of the peer that opened the connection, before any proxy headers. */
   remoteAddress: (c: Context) => string | undefined;
   logger: Logger;
+  /** The YAML mirror of the rules. A no-op when no rules file is configured. */
+  rulesFile: RulesFile;
 }
 
 export const consoleLogger: Logger = {

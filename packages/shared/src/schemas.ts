@@ -164,6 +164,24 @@ export const ruleSchema = ruleInputSchema.extend({
 });
 export type Rule = z.infer<typeof ruleSchema>;
 
+export const rulesSourceProblemSchema = z.object({
+  message: z.string(),
+  /** 1-based line in the rules file, when the problem can be pinned to one. */
+  line: z.number().int().nullable(),
+});
+export type RulesSourceProblem = z.infer<typeof rulesSourceProblemSchema>;
+
+/** State of the rules file that mirrors the rules, when one is configured. */
+export const rulesSourceSchema = z.object({
+  enabled: z.boolean(),
+  path: z.string().nullable(),
+  /** When the file and the stored rules last agreed. */
+  syncedAt: z.number().nullable(),
+  /** Why the current file content was not applied. Empty when it was. */
+  problems: z.array(rulesSourceProblemSchema),
+});
+export type RulesSource = z.infer<typeof rulesSourceSchema>;
+
 export const notificationPreviewSchema = z.object({
   threadId: z.string(),
   title: z.string(),

@@ -34,7 +34,10 @@ WORKDIR /app
 COPY --from=build /src/apps/server/dist ./dist
 COPY --from=build /src/apps/web/dist ./public
 
-RUN mkdir -p /data && chown bun:bun /data
+# `mewte validate-rules <file>` inside the container, instead of spelling out the bundle.
+RUN printf '#!/bin/sh\nexec bun /app/dist/index.mjs "$@"\n' > /usr/local/bin/mewte \
+    && chmod +x /usr/local/bin/mewte \
+    && mkdir -p /data && chown bun:bun /data
 USER bun
 VOLUME /data
 EXPOSE 3000

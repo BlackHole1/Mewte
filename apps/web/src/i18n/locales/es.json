@@ -214,7 +214,11 @@
     "previewRunning": "Revisando notificaciones…",
     "previewAccount": "{{login}}: coincidencias {{matched}} de {{fetched}}",
     "previewNoMatch": "Ninguna notificación no leída coincide.",
-    "previewError": "No se pudo revisar esta cuenta: {{message}}"
+    "previewError": "No se pudo revisar esta cuenta: {{message}}",
+    "fileSynced": "Las reglas se sincronizan con {{path}}. Editar ese archivo cambia las reglas, y guardar una regla aquí reescribe el archivo.",
+    "fileInvalid": "El archivo de reglas tiene errores",
+    "fileInvalidHint": "Los cambios de {{path}} no se aplicaron. Las reglas de abajo son las últimas válidas.",
+    "fileProblemLine": "Línea {{line}}: {{message}}"
   },
   "conditions": {
     "modes": {

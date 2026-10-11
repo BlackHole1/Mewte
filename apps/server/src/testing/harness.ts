@@ -6,6 +6,7 @@ import { type Deps, silentLogger } from "../deps";
 import { SESSION_COOKIE } from "../services/auth";
 import { createCipher } from "../services/crypto";
 import type { PasswordHasher } from "../services/password";
+import { createRulesFile } from "../services/rules-file";
 import { FakeGitHub } from "./fake-github";
 
 /** Stands in for Argon2 where a test is not about hashing, to keep the suite fast. */
@@ -36,7 +37,7 @@ export interface Harness {
 
 export async function createHarness(
   kind: DbKind = "sqlite",
-  overrides: Partial<Config> & { hasher?: PasswordHasher } = {},
+  overrides: Partial<Config> & { hasher?: PasswordHasher; rulesFilePath?: string } = {},
 ): Promise<Harness> {
   const database: TestDatabase = await createTestDb(kind);
   const github = new FakeGitHub();
@@ -46,7 +47,7 @@ export async function createHarness(
       this.now += ms;
     },
   };
-  const { hasher, ...configOverrides } = overrides;
+  const { hasher, rulesFilePath, ...configOverrides } = overrides;
   const config: Config = {
     databaseUrl: ":memory:",
     dataDir: "./data",
@@ -58,6 +59,7 @@ export async function createHarness(
     cookieSecure: "auto",
     githubApiUrl: github.apiUrl,
     webDist: undefined,
+    rulesFile: undefined,
     ...configOverrides,
   };
   const sleeps: number[] = [];
@@ -74,6 +76,13 @@ export async function createHarness(
     instanceId: "test-instance",
     remoteAddress: () => "198.51.100.7",
     logger: silentLogger,
+    // Off unless a test asks for it; tests call sync() themselves instead of waiting for the poll.
+    rulesFile: createRulesFile({
+      conn: database,
+      now: () => clock.now,
+      logger: silentLogger,
+      path: rulesFilePath,
+    }),
   };
   const app = createApp(deps);
   let cookie: string | undefined;

@@ -214,7 +214,11 @@
     "previewRunning": "Checking notifications…",
     "previewAccount": "{{login}}: {{matched}} of {{fetched}} match",
     "previewNoMatch": "No unread notification matches.",
-    "previewError": "Could not check this account: {{message}}"
+    "previewError": "Could not check this account: {{message}}",
+    "fileSynced": "Rules are mirrored in {{path}}. Editing that file changes the rules, and saving a rule here rewrites the file.",
+    "fileInvalid": "The rules file has errors",
+    "fileInvalidHint": "The edits in {{path}} were not applied. The rules below are the last valid ones.",
+    "fileProblemLine": "Line {{line}}: {{message}}"
   },
   "conditions": {
     "modes": {

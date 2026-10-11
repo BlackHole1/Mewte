@@ -214,7 +214,11 @@
     "previewRunning": "알림 확인 중…",
     "previewAccount": "{{login}}: {{fetched}}개 중 {{matched}}개 일치",
     "previewNoMatch": "일치하는 읽지 않은 알림이 없습니다.",
-    "previewError": "이 계정을 확인하지 못했습니다: {{message}}"
+    "previewError": "이 계정을 확인하지 못했습니다: {{message}}",
+    "fileSynced": "규칙은 {{path}} 파일과 동기화됩니다. 이 파일을 수정하면 규칙이 바뀌고, 여기에서 규칙을 저장하면 파일이 다시 작성됩니다.",
+    "fileInvalid": "규칙 파일에 오류가 있습니다",
+    "fileInvalidHint": "{{path}}의 수정 내용이 적용되지 않았습니다. 아래에는 마지막으로 유효했던 규칙이 표시됩니다.",
+    "fileProblemLine": "{{line}}번째 줄: {{message}}"
   },
   "conditions": {
     "modes": {

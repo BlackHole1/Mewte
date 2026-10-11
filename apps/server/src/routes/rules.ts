@@ -13,6 +13,7 @@ import {
   okSchema,
   ruleInputSchema,
   ruleSchema,
+  rulesSourceSchema,
 } from "@mewte/shared";
 import { z } from "zod";
 import type { Deps } from "../deps";
@@ -63,6 +64,7 @@ export function ruleRoutes(deps: Deps) {
     async (c) => {
       const rule = await insertRule(deps.conn, newId(), c.req.valid("json"), deps.now());
       await resetPollMarkers(deps.conn);
+      await deps.rulesFile.save();
       return c.json(rule, 201);
     },
   );
@@ -83,6 +85,23 @@ export function ruleRoutes(deps: Deps) {
       },
     }),
     async (c) => c.json(await dryRun(deps, c.req.valid("json")), 200),
+  );
+
+  app.openapi(
+    createRoute({
+      method: "get",
+      path: "/rules/source",
+      tags,
+      security,
+      summary: "Get the state of the rules file",
+      description:
+        "When a rules file is configured, the rules are mirrored in a YAML file: Mewte loads the file when it changes and rewrites it when a rule changes through this API. `problems` lists why the current content of the file was not applied; the stored rules stay as they were until the file is fixed.",
+      responses: {
+        200: json(rulesSourceSchema.openapi("RulesSource"), "State of the rules file."),
+        ...pick(401),
+      },
+    }),
+    (c) => c.json(deps.rulesFile.status(), 200),
   );
 
   app.openapi(
@@ -121,6 +140,7 @@ export function ruleRoutes(deps: Deps) {
       );
       if (!rule) throw notFound("Rule");
       await resetPollMarkers(deps.conn);
+      await deps.rulesFile.save();
       return c.json(rule, 200);
     },
   );
@@ -140,6 +160,7 @@ export function ruleRoutes(deps: Deps) {
       const { id } = c.req.valid("param");
       if (!(await getRule(deps.conn, id))) throw notFound("Rule");
       await deleteRule(deps.conn, id);
+      await deps.rulesFile.save();
       return c.json({ ok: true as const }, 200);
     },
   );

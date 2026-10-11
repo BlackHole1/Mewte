@@ -20,6 +20,7 @@ const configSchema = z.object({
   COOKIE_SECURE: z.preprocess(blankAsUndefined, z.enum(["auto", "true", "false"]).default("auto")),
   GITHUB_API_URL: z.preprocess(blankAsUndefined, z.url().default("https://api.github.com")),
   WEB_DIST: z.preprocess(blankAsUndefined, z.string().optional()),
+  RULES_FILE: z.preprocess(blankAsUndefined, z.string().optional()),
 });
 
 export interface Config {
@@ -33,6 +34,8 @@ export interface Config {
   cookieSecure: "auto" | "true" | "false";
   githubApiUrl: string;
   webDist: string | undefined;
+  /** Path of the rules file, `off`, or undefined for the default of the database in use. */
+  rulesFile: string | undefined;
 }
 
 export function loadConfig(env: Record<string, string | undefined>): Config {
@@ -53,5 +56,6 @@ export function loadConfig(env: Record<string, string | undefined>): Config {
     cookieSecure: value.COOKIE_SECURE,
     githubApiUrl: value.GITHUB_API_URL.replace(/\/+$/, ""),
     webDist: value.WEB_DIST,
+    rulesFile: value.RULES_FILE,
   };
 }
