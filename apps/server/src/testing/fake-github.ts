@@ -134,6 +134,7 @@ export class FakeGitHub {
       const common = {
         "x-poll-interval": String(this.pollInterval),
         "last-modified": this.lastModified,
+        "x-oauth-scopes": user.scopes,
       };
       if (headers.get("if-modified-since") === this.lastModified) {
         return new Response(null, { status: 304, headers: common });

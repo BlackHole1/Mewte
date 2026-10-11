@@ -2,6 +2,7 @@ import {
   type AccountPatch,
   type AccountRecord,
   acquireLease,
+  clearCache,
   getAccount,
   getCached,
   insertHistory,
@@ -36,6 +37,7 @@ import {
   type GitHubNotification,
   type NotificationList,
   createGitHubClient,
+  sameScopes,
 } from "../github/client";
 import { type Enricher, type EnrichmentCache, createEnricher } from "../github/enrich";
 import { newId, sha256Hex } from "./crypto";
@@ -275,6 +277,12 @@ async function execute(deps: Deps, account: AccountRecord, trigger: RunTrigger):
     pollIntervalSec,
     nextRunAt: finishedAt + delayMs,
   };
+  // The scopes of a token can be edited on GitHub at any time, and every response reports them.
+  const scopes =
+    list?.scopes && !sameScopes(list.scopes, account.scopes ? account.scopes.split(",") : [])
+      ? list.scopes.join(",")
+      : undefined;
+  if (scopes !== undefined) patch.scopes = scopes;
 
   if (fatal === undefined) {
     patch.status = "ok";
@@ -283,6 +291,8 @@ async function execute(deps: Deps, account: AccountRecord, trigger: RunTrigger):
       // Keep the marker only after a clean pass, so anything that failed is retried.
       patch.lastModified = errors.length === 0 ? (list.lastModified ?? null) : null;
     }
+    // This run decided with the old scopes in part, so the next one must not stop at a 304.
+    if (scopes !== undefined) patch.lastModified = null;
   } else {
     patch.lastError = describe(fatal).slice(0, 1000);
     patch.lastModified = null;
@@ -297,6 +307,8 @@ async function execute(deps: Deps, account: AccountRecord, trigger: RunTrigger):
     }
   }
   await updateAccount(deps.conn, account.id, patch);
+  // The token may now see what it could not, so lookups cached as unavailable must go.
+  if (scopes !== undefined) await clearCache(deps.conn);
 
   const run: RunLog = {
     id: newId(),

@@ -51,11 +51,15 @@ describe("GitHub client", () => {
     expect(github.count("GET", "/notifications")).toBe(3);
   });
 
-  it("returns notModified on 304 and still reports the poll interval", async () => {
+  it("returns notModified on 304 and still reports the poll interval and the scopes", async () => {
     const { client, github } = setup();
     github.pollInterval = 120;
     const list = await client.listNotifications({ ifModifiedSince: github.lastModified });
-    expect(list).toEqual({ notModified: true, pollIntervalSec: 120 });
+    expect(list).toEqual({
+      notModified: true,
+      pollIntervalSec: 120,
+      scopes: ["notifications", "repo"],
+    });
   });
 
   it("marks a thread as done with DELETE", async () => {

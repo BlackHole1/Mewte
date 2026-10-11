@@ -10,7 +10,7 @@ import {
 import { z } from "zod";
 import type { Deps } from "../deps";
 import { ApiError, notFound } from "../errors";
-import { bindAccount, editAccount, toAccount } from "../services/accounts";
+import { bindAccount, editAccount, toAccount, verifyAccount } from "../services/accounts";
 import { runAccount } from "../services/runner";
 import { createRouter, json, jsonBody, pick, sessionSecurity } from "./helpers";
 
@@ -92,6 +92,24 @@ export function accountRoutes(deps: Deps) {
     }),
     async (c) => {
       const record = await editAccount(deps, c.req.valid("param").id, c.req.valid("json"));
+      return c.json(toAccount(record, deps.now()), 200);
+    },
+  );
+
+  app.openapi(
+    createRoute({
+      method: "post",
+      path: "/accounts/{id}/verify",
+      tags,
+      security,
+      summary: "Check an account's token again",
+      description:
+        "Asks GitHub about the stored token and updates the account's login, avatar, scopes and status, for example after the token's scopes were edited on GitHub. A token GitHub rejects sets the status to `unauthorized`, and one without the `notifications` scope sets it to `error`; both still answer 200 with the updated account. Scheduled and manual runs also pick up changed scopes on their own.",
+      request: { params: idParam },
+      responses: { 200: json(AccountSchema, "The checked account."), ...pick(401, 404, 502) },
+    }),
+    async (c) => {
+      const record = await verifyAccount(deps, c.req.valid("param").id);
       return c.json(toAccount(record, deps.now()), 200);
     },
   );

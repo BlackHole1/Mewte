@@ -15,6 +15,7 @@ import {
   PencilIcon,
   PlayIcon,
   PlusIcon,
+  RefreshCwIcon,
   Trash2Icon,
   TriangleAlertIcon,
 } from "lucide-react";
@@ -330,6 +331,26 @@ function AccountCard({
     },
   });
 
+  const verify = useMutation({
+    mutationFn: () => api.verifyAccount(account.id),
+    onError,
+    onSettled: refreshAccounts,
+    onSuccess: (result) => {
+      if (result.status === "ok") {
+        toastManager.add({ type: "success", title: t("accounts.verified") });
+        return;
+      }
+      toastManager.add({
+        type: "error",
+        title: t("accounts.verifyFailed"),
+        description:
+          result.status === "unauthorized"
+            ? t("accounts.unauthorizedHint")
+            : (result.lastError ?? undefined),
+      });
+    },
+  });
+
   const busy = run.isPending || account.running;
 
   return (
@@ -449,12 +470,24 @@ function AccountCard({
         </div>
         <div className="flex flex-col gap-1 px-5 py-3">
           <dt className="text-muted-foreground text-xs">{t("accounts.scopes")}</dt>
-          <dd className="flex flex-wrap gap-1">
+          <dd className="flex flex-wrap items-center gap-1">
             {account.scopes.map((scope) => (
               <Badge key={scope} variant="outline">
                 {scope}
               </Badge>
             ))}
+            <Button
+              aria-label={t("accounts.verify")}
+              className="ms-auto"
+              loading={verify.isPending}
+              onClick={() => verify.mutate()}
+              size="icon-sm"
+              title={t("accounts.verify")}
+              type="button"
+              variant="ghost"
+            >
+              <RefreshCwIcon aria-hidden="true" />
+            </Button>
           </dd>
         </div>
       </dl>
